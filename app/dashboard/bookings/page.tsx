@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -29,11 +29,7 @@ export default function BookingsPage() {
   const [filter, setFilter] = useState<'upcoming' | 'past' | 'cancelled'>('upcoming')
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchBookings()
-  }, [filter])
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     setLoading(true)
     try {
       let url = '/api/bookings?'
@@ -69,7 +65,11 @@ export default function BookingsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filter, router])
+
+  useEffect(() => {
+    fetchBookings()
+  }, [fetchBookings])
 
   const handleCancelBooking = async (bookingId: string) => {
     const reason = prompt('Reason for cancellation (optional):')

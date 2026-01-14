@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { format, addDays, startOfDay, parseISO } from 'date-fns'
 
@@ -10,6 +10,8 @@ interface EventType {
   description?: string
   duration: number
   color: string
+  location?: string
+  meetingLink?: string
   user: {
     name: string
     username: string
@@ -43,17 +45,7 @@ export default function BookingPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
-  useEffect(() => {
-    fetchEventType()
-  }, [username, slug])
-
-  useEffect(() => {
-    if (eventType) {
-      fetchSlots()
-    }
-  }, [selectedDate, eventType])
-
-  const fetchEventType = async () => {
+  const fetchEventType = useCallback(async () => {
     try {
       const response = await fetch(`/api/users/${username}/events/${slug}`)
       if (!response.ok) throw new Error('Event type not found')
@@ -65,9 +57,9 @@ export default function BookingPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [username, slug])
 
-  const fetchSlots = async () => {
+  const fetchSlots = useCallback(async () => {
     if (!eventType) return
     
     setLoadingSlots(true)
@@ -87,7 +79,17 @@ export default function BookingPage() {
     } finally {
       setLoadingSlots(false)
     }
-  }
+  }, [eventType, selectedDate])
+
+  useEffect(() => {
+    fetchEventType()
+  }, [fetchEventType])
+
+  useEffect(() => {
+    if (eventType) {
+      fetchSlots()
+    }
+  }, [eventType, fetchSlots])
 
   const handleSlotSelect = (slot: TimeSlot) => {
     setSelectedSlot(slot)
