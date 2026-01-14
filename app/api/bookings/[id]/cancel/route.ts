@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authMiddleware } from '@/lib/middleware'
 import { sendCancellationEmail } from '@/lib/email'
+import { deleteGoogleCalendarEvent } from '@/lib/google-calendar'
 
 // PUT /api/bookings/[id]/cancel
 export async function PUT(
@@ -44,6 +45,29 @@ export async function PUT(
         cancellationReason: reason,
       },
     })
+    
+    // Delete Google Calendar event if it exists
+    if (booking.googleEventId) {
+      try {
+        const calendarConnection = await prisma.calendarConnection.findFirst({
+          where: {
+            userId: booking.userId,
+            provider: 'google',
+          },
+        })
+        
+        if (calendarConnection) {
+          await deleteGoogleCalendarEvent(
+            calendarConnection.accessToken,
+            calendarConnection.refreshToken,
+            booking.googleEventId
+          )
+        }
+      } catch (calendarError) {
+        console.error('Failed to delete Google Calendar event:', calendarError)
+        // Don't fail the cancellation if calendar deletion fails
+      }
+    }
     
     // Send cancellation email
     try {

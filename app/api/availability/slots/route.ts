@@ -5,7 +5,8 @@ import {
   filterAvailableSlots,
   getFutureAvailableSlots,
 } from '@/lib/availability'
-import { parseISO, startOfDay } from 'date-fns'
+import { parseISO, startOfDay, endOfDay } from 'date-fns'
+import { getGoogleCalendarBusyTimes } from '@/lib/google-calendar'
 
 // GET /api/availability/slots
 export async function GET(request: NextRequest) {
@@ -84,14 +85,45 @@ export async function GET(request: NextRequest) {
       },
     })
     
-    // Filter out booked slots
-    slots = filterAvailableSlots(
-      slots,
-      bookings.map(booking => ({
+    // Check if user has Google Calendar connected
+    const calendarConnection = await prisma.calendarConnection.findFirst({
+      where: {
+        userId: eventType.userId,
+        provider: 'google',
+      },
+    })
+    
+    // Get Google Calendar busy times if connected
+    let googleBusyTimes: Array<{ startTime: Date; endTime: Date }> = []
+    if (calendarConnection) {
+      try {
+        const busyTimes = await getGoogleCalendarBusyTimes(
+          calendarConnection.accessToken,
+          calendarConnection.refreshToken,
+          startOfDayDate,
+          endOfDayDate
+        )
+        googleBusyTimes = busyTimes.map(busy => ({
+          startTime: busy.start,
+          endTime: busy.end,
+        }))
+      } catch (error) {
+        console.error('Failed to fetch Google Calendar busy times:', error)
+        // Continue without calendar sync
+      }
+    }
+    
+    // Combine database bookings with Google Calendar busy times
+    const allBusyTimes = [
+      ...bookings.map(booking => ({
         startTime: booking.startTime,
         endTime: booking.endTime,
-      }))
-    )
+      })),
+      ...googleBusyTimes,
+    ]
+    
+    // Filter out booked slots
+    slots = filterAvailableSlots(slots, allBusyTimes)
     
     // Filter out past slots
     const availableSlots = getFutureAvailableSlots(slots)

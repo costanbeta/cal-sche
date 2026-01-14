@@ -5,6 +5,7 @@ import { bookingSchema } from '@/lib/validations'
 import { addMinutes, parseISO } from 'date-fns'
 import { doTimesOverlap } from '@/lib/availability'
 import { sendBookingConfirmation, sendBookingNotification } from '@/lib/email'
+import { createGoogleCalendarEvent } from '@/lib/google-calendar'
 
 // GET /api/bookings - List user's bookings
 export async function GET(request: NextRequest) {
@@ -107,6 +108,46 @@ export async function POST(request: NextRequest) {
         eventType: true,
       },
     })
+    
+    // Create Google Calendar event if user has calendar connected
+    try {
+      const calendarConnection = await prisma.calendarConnection.findFirst({
+        where: {
+          userId: eventType.userId,
+          provider: 'google',
+        },
+      })
+      
+      if (calendarConnection) {
+        const eventDescription = `Meeting with ${booking.attendeeName} (${booking.attendeeEmail})${
+          booking.attendeeNotes ? `\n\nNotes: ${booking.attendeeNotes}` : ''
+        }\n\nBooking ID: ${booking.id}`
+        
+        const googleEventId = await createGoogleCalendarEvent(
+          calendarConnection.accessToken,
+          calendarConnection.refreshToken,
+          {
+            summary: `${eventType.name} with ${booking.attendeeName}`,
+            description: eventDescription,
+            startTime: booking.startTime,
+            endTime: booking.endTime,
+            attendeeEmail: booking.attendeeEmail,
+            timezone: booking.timezone,
+          }
+        )
+        
+        // Update booking with Google Event ID
+        if (googleEventId) {
+          await prisma.booking.update({
+            where: { id: booking.id },
+            data: { googleEventId },
+          })
+        }
+      }
+    } catch (calendarError) {
+      console.error('Failed to create Google Calendar event:', calendarError)
+      // Don't fail the booking if calendar creation fails
+    }
     
     // Send confirmation emails (don't wait for them)
     try {
