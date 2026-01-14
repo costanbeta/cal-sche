@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     
     // Create new availability rules
     const availability = await prisma.availability.createMany({
-      data: validatedRules.map((rule) => ({
+      data: validatedRules.map((rule: { dayOfWeek: number; startTime: string; endTime: string; timezone: string }) => ({
         ...rule,
         userId: auth.userId,
       })),
