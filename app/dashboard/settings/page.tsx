@@ -71,15 +71,16 @@ export default function SettingsPage() {
   const handleConnectCalendar = async () => {
     try {
       const response = await fetch('/api/calendar/connect')
+      const data = await response.json()
+      
       if (response.ok) {
-        const data = await response.json()
         window.location.href = data.authUrl
       } else {
-        alert('Failed to initiate Google Calendar connection')
+        alert(data.error || 'Failed to initiate Google Calendar connection. Please ensure Google OAuth credentials are configured in your environment variables.')
       }
     } catch (error) {
       console.error('Failed to connect calendar:', error)
-      alert('Failed to connect Google Calendar')
+      alert('Failed to connect Google Calendar. Please check your internet connection and try again.')
     }
   }
 

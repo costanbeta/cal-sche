@@ -8,14 +8,23 @@ export async function GET(request: NextRequest) {
     const auth = await authMiddleware(request)
     if (!auth) return unauthorizedResponse()
     
+    // Check if Google OAuth credentials are configured
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      return NextResponse.json(
+        { error: 'Google Calendar integration is not configured. Please add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to your environment variables.' },
+        { status: 503 }
+      )
+    }
+    
     const authUrl = getAuthUrl()
     
-    return NextResponse.redirect(authUrl)
+    // Return JSON with auth URL for the frontend to redirect
+    return NextResponse.json({ authUrl })
     
   } catch (error) {
     console.error('Calendar connect error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to initiate Google Calendar connection. Please try again.' },
       { status: 500 }
     )
   }
