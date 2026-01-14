@@ -33,24 +33,34 @@ export async function GET(request: NextRequest) {
     }
     
     // Store calendar connection
-    await prisma.calendarConnection.upsert({
+    const existing = await prisma.calendarConnection.findFirst({
       where: {
         userId: auth.userId,
-      },
-      update: {
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token!,
-        tokenExpiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
-      },
-      create: {
-        userId: auth.userId,
         provider: 'google',
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token!,
-        tokenExpiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
-        isPrimary: true,
       },
     })
+
+    if (existing) {
+      await prisma.calendarConnection.update({
+        where: { id: existing.id },
+        data: {
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token!,
+          tokenExpiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+        },
+      })
+    } else {
+      await prisma.calendarConnection.create({
+        data: {
+          userId: auth.userId,
+          provider: 'google',
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token!,
+          tokenExpiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+          isPrimary: true,
+        },
+      })
+    }
     
     return NextResponse.redirect(
       `${process.env.APP_URL}/dashboard?calendar_success=true`
