@@ -113,6 +113,12 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-bold text-blue-600">SchedulePro</h1>
             <div className="flex items-center gap-4">
               <span className="text-gray-700">Hi, {user?.name}</span>
+              <Link
+                href="/dashboard/settings"
+                className="px-4 py-2 text-gray-700 hover:text-blue-600 transition"
+              >
+                Settings
+              </Link>
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 text-gray-700 hover:text-red-600 transition"
