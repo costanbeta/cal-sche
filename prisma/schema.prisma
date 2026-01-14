@@ -1,0 +1,152 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String                @id @default(uuid())
+  email               String                @unique
+  name                String
+  username            String                @unique
+  password            String
+  timezone            String                @default("UTC")
+  avatarUrl           String?               @map("avatar_url")
+  emailVerified       DateTime?             @map("email_verified")
+  createdAt           DateTime              @default(now()) @map("created_at")
+  updatedAt           DateTime              @updatedAt @map("updated_at")
+  
+  eventTypes          EventType[]
+  availability        Availability[]
+  dateOverrides       DateOverride[]
+  bookings            Booking[]
+  calendarConnections CalendarConnection[]
+  accounts            Account[]
+  sessions            Session[]
+  
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model EventType {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  name            String
+  slug            String
+  description     String?
+  duration        Int       // in minutes
+  color           String    @default("#3B82F6")
+  isActive        Boolean   @default(true) @map("is_active")
+  location        String?   // "zoom", "google_meet", "phone", "in_person", or custom
+  meetingLink     String?   @map("meeting_link") // Custom meeting link (Zoom, Google Meet, etc.)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings    Booking[]
+  
+  @@unique([userId, slug])
+  @@map("event_types")
+}
+
+model Availability {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  dayOfWeek   Int      @map("day_of_week") // 0 = Sunday, 6 = Saturday
+  startTime   String   @map("start_time")  // Format: "HH:mm"
+  endTime     String   @map("end_time")    // Format: "HH:mm"
+  timezone    String   @default("UTC")
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("availability")
+}
+
+model DateOverride {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  date        DateTime @db.Date
+  isAvailable Boolean  @default(false) @map("is_available")
+  startTime   String?  @map("start_time") // Format: "HH:mm"
+  endTime     String?  @map("end_time")   // Format: "HH:mm"
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("date_overrides")
+}
+
+model Booking {
+  id                 String    @id @default(uuid())
+  eventTypeId        String    @map("event_type_id")
+  userId             String    @map("user_id")
+  attendeeName       String    @map("attendee_name")
+  attendeeEmail      String    @map("attendee_email")
+  attendeeNotes      String?   @map("attendee_notes")
+  startTime          DateTime  @map("start_time")
+  endTime            DateTime  @map("end_time")
+  timezone           String
+  status             String    @default("confirmed") // confirmed, cancelled, completed
+  googleEventId      String?   @map("google_event_id")
+  cancellationReason String?   @map("cancellation_reason")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  
+  eventType          EventType @relation(fields: [eventTypeId], references: [id], onDelete: Cascade)
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, startTime])
+  @@map("bookings")
+}
+
+model CalendarConnection {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  provider        String    // google, outlook
+  accessToken     String    @map("access_token")
+  refreshToken    String    @map("refresh_token")
+  tokenExpiresAt  DateTime? @map("token_expires_at")
+  calendarId      String?   @map("calendar_id")
+  isPrimary       Boolean   @default(true) @map("is_primary")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("calendar_connections")
+}
