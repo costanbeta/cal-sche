@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -25,11 +25,24 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [disconnecting, setDisconnecting] = useState(false)
 
-  useEffect(() => {
-    fetchData()
+  const fetchCalendarConnection = useCallback(async (userId: string) => {
+    // This would need a new API endpoint to check calendar connection
+    // For now, we'll make it work with existing endpoints
+    try {
+      const response = await fetch('/api/calendar/status')
+      if (response.ok) {
+        const data = await response.json()
+        if (data.connected) {
+          setCalendarConnection(data.connection)
+        }
+      }
+    } catch (error) {
+      // Calendar not connected or error fetching
+      console.log('Calendar not connected')
+    }
   }, [])
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       // Fetch user data
       const userRes = await fetch('/api/auth/me')
@@ -49,24 +62,11 @@ export default function SettingsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [router, fetchCalendarConnection])
 
-  const fetchCalendarConnection = async (userId: string) => {
-    // This would need a new API endpoint to check calendar connection
-    // For now, we'll make it work with existing endpoints
-    try {
-      const response = await fetch('/api/calendar/status')
-      if (response.ok) {
-        const data = await response.json()
-        if (data.connected) {
-          setCalendarConnection(data.connection)
-        }
-      }
-    } catch (error) {
-      // Calendar not connected or error fetching
-      console.log('Calendar not connected')
-    }
-  }
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const handleConnectCalendar = async () => {
     try {

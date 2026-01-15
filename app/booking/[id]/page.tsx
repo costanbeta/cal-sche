@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -37,11 +37,7 @@ export default function BookingDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    fetchBooking()
-  }, [bookingId])
-
-  const fetchBooking = async () => {
+  const fetchBooking = useCallback(async () => {
     try {
       const response = await fetch(`/api/bookings/${bookingId}`)
       if (!response.ok) {
@@ -60,7 +56,11 @@ export default function BookingDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [bookingId])
+
+  useEffect(() => {
+    fetchBooking()
+  }, [fetchBooking])
 
   const getLocationLabel = (location: string) => {
     const labels: Record<string, string> = {

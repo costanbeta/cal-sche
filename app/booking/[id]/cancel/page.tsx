@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 
@@ -36,11 +36,7 @@ export default function CancelBookingPage() {
   const [reason, setReason] = useState('')
   const [success, setSuccess] = useState(false)
 
-  useEffect(() => {
-    fetchBooking()
-  }, [bookingId])
-
-  const fetchBooking = async () => {
+  const fetchBooking = useCallback(async () => {
     try {
       const response = await fetch(`/api/bookings/${bookingId}`)
       if (!response.ok) {
@@ -68,7 +64,11 @@ export default function CancelBookingPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [bookingId])
+
+  useEffect(() => {
+    fetchBooking()
+  }, [fetchBooking])
 
   const handleCancel = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -130,7 +130,7 @@ export default function CancelBookingPage() {
             </p>
           </div>
           <p className="text-sm text-gray-600">
-            If you'd like to reschedule, please visit the booking page again.
+            If you&apos;d like to reschedule, please visit the booking page again.
           </p>
         </div>
       </div>
@@ -194,7 +194,7 @@ export default function CancelBookingPage() {
         {/* Booking Details */}
         <div className="bg-white rounded-b-lg shadow-lg p-8">
           <p className="text-gray-600 mb-6">
-            You're about to cancel the following booking:
+            You&apos;re about to cancel the following booking:
           </p>
 
           {/* Event Details */}
@@ -245,7 +245,7 @@ export default function CancelBookingPage() {
                 onChange={(e) => setReason(e.target.value)}
                 rows={4}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                placeholder="Let us know why you're cancelling..."
+                placeholder="Let us know why you&apos;re cancelling..."
               />
             </div>
 

@@ -51,11 +51,7 @@ export default function RescheduleBookingPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
-  useEffect(() => {
-    fetchBooking()
-  }, [bookingId])
-
-  const fetchBooking = async () => {
+  const fetchBooking = useCallback(async () => {
     try {
       const response = await fetch(`/api/bookings/${bookingId}`)
       if (!response.ok) {
@@ -83,7 +79,11 @@ export default function RescheduleBookingPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [bookingId])
+
+  useEffect(() => {
+    fetchBooking()
+  }, [fetchBooking])
 
   const fetchSlots = useCallback(async () => {
     if (!booking) return

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -35,11 +35,7 @@ export default function EditEventTypePage() {
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
 
-  useEffect(() => {
-    fetchEventType()
-  }, [eventTypeId])
-
-  const fetchEventType = async () => {
+  const fetchEventType = useCallback(async () => {
     try {
       const response = await fetch('/api/event-types')
       if (!response.ok) {
@@ -73,7 +69,11 @@ export default function EditEventTypePage() {
     } finally {
       setFetching(false)
     }
-  }
+  }, [eventTypeId, router])
+
+  useEffect(() => {
+    fetchEventType()
+  }, [fetchEventType])
 
   const handleNameChange = (name: string) => {
     const slug = name
