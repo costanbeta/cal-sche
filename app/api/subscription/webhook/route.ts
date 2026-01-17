@@ -103,7 +103,7 @@ async function handleSubscriptionActivated(subscription: any) {
     data: {
       userId: user.id,
       action: 'upgraded',
-      fromTier: user.subscriptionTier,
+      fromTier: user.subscriptionTier || 'free',
       toTier: tier,
       currency: 'INR',
     },
@@ -121,7 +121,7 @@ async function handleSubscriptionCharged(subscription: any, payment: any) {
     data: {
       userId: user.id,
       action: 'renewed',
-      toTier: user.subscriptionTier,
+      toTier: user.subscriptionTier || 'free',
       amount: payment?.amount ? payment.amount / 100 : 0,
       currency: payment?.currency || 'INR',
       transactionId: payment?.id,
@@ -159,7 +159,7 @@ async function handleSubscriptionCompleted(subscription: any) {
     data: {
       userId: user.id,
       action: 'downgraded',
-      fromTier: user.subscriptionTier,
+      fromTier: user.subscriptionTier || 'free',
       toTier: 'free',
     },
   })
@@ -184,7 +184,7 @@ async function handleSubscriptionCancelled(subscription: any) {
     data: {
       userId: user.id,
       action: 'cancelled',
-      fromTier: user.subscriptionTier,
+      fromTier: user.subscriptionTier || 'free',
       toTier: 'free',
     },
   })
@@ -208,7 +208,7 @@ async function handleSubscriptionHalted(subscription: any) {
     data: {
       userId: user.id,
       action: 'payment_failed',
-      toTier: user.subscriptionTier,
+      toTier: user.subscriptionTier || 'free',
     },
   })
 }
