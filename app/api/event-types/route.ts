@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { authMiddleware, unauthorizedResponse } from '@/lib/middleware'
 import { eventTypeSchema } from '@/lib/validations'
 import { generateSlug } from '@/lib/auth'
+import { checkUsageLimit } from '@/lib/subscription'
 
 // GET /api/event-types - List user's event types
 export async function GET(request: NextRequest) {
@@ -31,6 +32,22 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await authMiddleware(request)
     if (!auth) return unauthorizedResponse()
+    
+    // Check usage limits
+    const usageCheck = await checkUsageLimit(auth.userId, 'eventTypes')
+    if (!usageCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Event type limit reached',
+          message: `You've reached your limit of ${usageCheck.limit} event types. Upgrade to Pro for unlimited event types.`,
+          current: usageCheck.current,
+          limit: usageCheck.limit,
+          tier: usageCheck.tier,
+          upgradeUrl: '/pricing',
+        },
+        { status: 403 }
+      )
+    }
     
     const body = await request.json()
     const validatedData = eventTypeSchema.parse(body)

@@ -7,6 +7,71 @@ export interface User {
   avatarUrl?: string
   createdAt: Date
   updatedAt: Date
+  subscriptionTier?: SubscriptionTier
+  subscriptionStatus?: SubscriptionStatus
+}
+
+export type SubscriptionTier = 'free' | 'pro' | 'business'
+export type SubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'created' | 'authenticated' | 'halted'
+
+export interface Subscription {
+  tier: SubscriptionTier
+  status: SubscriptionStatus
+  razorpaySubscriptionId?: string
+  razorpayCustomerId?: string
+  razorpayPlanId?: string
+  currentPeriodStart?: Date
+  currentPeriodEnd?: Date
+  cancelAtPeriodEnd: boolean
+  trialEndsAt?: Date
+}
+
+export interface PricingPlan {
+  id: string
+  name: string
+  displayName: string
+  description?: string
+  monthlyPrice: number
+  yearlyPrice: number
+  currency: string
+  features: PricingFeature[]
+  limits: PricingLimits
+  razorpayPlanIdMonthly?: string
+  razorpayPlanIdYearly?: string
+  isActive: boolean
+  sortOrder: number
+}
+
+export interface PricingFeature {
+  name: string
+  included: boolean
+  description?: string
+  limit?: number
+}
+
+export interface PricingLimits {
+  eventTypes: number | null // null = unlimited
+  bookingsPerMonth: number | null
+  teamMembers: number | null
+  apiCalls?: number | null
+}
+
+export interface UsageMetrics {
+  bookings: { current: number; limit: number | null }
+  eventTypes: { current: number; limit: number | null }
+  teamMembers?: { current: number; limit: number | null }
+}
+
+export interface SubscriptionHistory {
+  id: string
+  action: string
+  fromTier?: string
+  toTier: string
+  amount?: number
+  currency: string
+  paymentMethod?: string
+  transactionId?: string
+  createdAt: Date
 }
 
 export interface EventType {

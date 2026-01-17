@@ -6,6 +6,7 @@ import { addMinutes, parseISO } from 'date-fns'
 import { doTimesOverlap } from '@/lib/availability'
 import { sendBookingConfirmation, sendBookingNotification } from '@/lib/email'
 import { createGoogleCalendarEvent } from '@/lib/google-calendar'
+import { checkUsageLimit } from '@/lib/subscription'
 
 // GET /api/bookings - List user's bookings
 export async function GET(request: NextRequest) {
@@ -56,6 +57,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Event type not found or inactive' },
         { status: 404 }
+      )
+    }
+    
+    // Check booking limits for the event owner
+    const usageCheck = await checkUsageLimit(eventType.userId, 'bookingsPerMonth')
+    if (!usageCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Booking limit reached',
+          message: `This user has reached their monthly booking limit of ${usageCheck.limit}. Please contact them to upgrade their plan or try again next month.`,
+        },
+        { status: 403 }
       )
     }
     

@@ -114,6 +114,12 @@ export default function DashboardPage() {
             <div className="flex items-center gap-4">
               <span className="text-gray-700">Hi, {user?.name}</span>
               <Link
+                href="/dashboard/billing"
+                className="px-4 py-2 text-gray-700 hover:text-blue-600 transition"
+              >
+                Billing
+              </Link>
+              <Link
                 href="/dashboard/settings"
                 className="px-4 py-2 text-gray-700 hover:text-blue-600 transition"
               >

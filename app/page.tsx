@@ -12,6 +12,12 @@ export default function HomePage() {
             </div>
             <div className="flex gap-4">
               <Link
+                href="/pricing"
+                className="px-4 py-2 text-gray-700 hover:text-blue-600 transition"
+              >
+                Pricing
+              </Link>
+              <Link
                 href="/auth/login"
                 className="px-4 py-2 text-gray-700 hover:text-blue-600 transition"
               >
