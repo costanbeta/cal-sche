@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { authMiddleware, unauthorizedResponse } from '@/lib/middleware'
 import { eventTypeSchema } from '@/lib/validations'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/event-types/[id]
 export async function GET(
   request: NextRequest,

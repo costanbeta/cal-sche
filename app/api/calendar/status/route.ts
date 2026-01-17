@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authMiddleware, unauthorizedResponse } from '@/lib/middleware'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/calendar/status - Check if user has calendar connected
 export async function GET(request: NextRequest) {
   try {

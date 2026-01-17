@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { TIER_LIMITS, TIER_FEATURES } from '@/lib/subscription'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
   try {
     // Public endpoint - no auth required

@@ -8,6 +8,8 @@ import {
 import { parseISO, startOfDay, endOfDay } from 'date-fns'
 import { getGoogleCalendarBusyTimes } from '@/lib/google-calendar'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/availability/slots
 export async function GET(request: NextRequest) {
   try {

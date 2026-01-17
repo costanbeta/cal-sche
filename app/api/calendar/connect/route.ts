@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUrl } from '@/lib/google-calendar'
 import { authMiddleware, unauthorizedResponse } from '@/lib/middleware'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/calendar/connect - Initiate OAuth flow
 export async function GET(request: NextRequest) {
   try {

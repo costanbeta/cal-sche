@@ -3,6 +3,8 @@ import { authMiddleware, unauthorizedResponse } from '@/lib/middleware'
 import { prisma } from '@/lib/prisma'
 import { cancelRazorpaySubscription } from '@/lib/razorpay'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: NextRequest) {
   try {
     const auth = await authMiddleware(req)

@@ -5,6 +5,8 @@ import { eventTypeSchema } from '@/lib/validations'
 import { generateSlug } from '@/lib/auth'
 import { checkUsageLimit } from '@/lib/subscription'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/event-types - List user's event types
 export async function GET(request: NextRequest) {
   try {

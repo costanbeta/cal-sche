@@ -4,6 +4,8 @@ import { authMiddleware } from '@/lib/middleware'
 import { sendCancellationEmail } from '@/lib/email'
 import { deleteGoogleCalendarEvent } from '@/lib/google-calendar'
 
+export const dynamic = 'force-dynamic'
+
 // PUT /api/bookings/[id]/cancel
 export async function PUT(
   request: NextRequest,

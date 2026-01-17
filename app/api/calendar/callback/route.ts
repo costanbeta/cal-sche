@@ -3,6 +3,8 @@ import { getTokensFromCode } from '@/lib/google-calendar'
 import { prisma } from '@/lib/prisma'
 import { authMiddleware } from '@/lib/middleware'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/calendar/callback - OAuth callback
 export async function GET(request: NextRequest) {
   try {

@@ -8,6 +8,8 @@ import { sendBookingConfirmation, sendBookingNotification } from '@/lib/email'
 import { createGoogleCalendarEvent } from '@/lib/google-calendar'
 import { checkUsageLimit } from '@/lib/subscription'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/bookings - List user's bookings
 export async function GET(request: NextRequest) {
   try {

@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { authMiddleware, unauthorizedResponse } from '@/lib/middleware'
 import { availabilitySchema } from '@/lib/validations'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/availability - Get user's availability rules
 export async function GET(request: NextRequest) {
   try {

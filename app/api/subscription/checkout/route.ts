@@ -7,6 +7,8 @@ import {
   createRazorpaySubscription,
 } from '@/lib/razorpay'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: NextRequest) {
   try {
     const auth = await authMiddleware(req)

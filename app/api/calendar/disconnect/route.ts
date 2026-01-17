@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authMiddleware, unauthorizedResponse } from '@/lib/middleware'
 
+export const dynamic = 'force-dynamic'
+
 // POST /api/calendar/disconnect - Remove calendar connection
 export async function POST(request: NextRequest) {
   try {

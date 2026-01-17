@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authMiddleware, unauthorizedResponse } from '@/lib/middleware'
 import { getUsageMetrics } from '@/lib/subscription'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
   try {
     const auth = await authMiddleware(req)
