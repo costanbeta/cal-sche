@@ -301,7 +301,7 @@ export default function DashboardPage() {
             <div className="text-4xl mb-2">🏖️</div>
             <h3 className="font-bold text-lg mb-2">Out of Office</h3>
             <p className="text-gray-600 text-sm">
-              Block dates when you're unavailable
+              Block dates when you&apos;re unavailable
             </p>
           </Link>
           <Link

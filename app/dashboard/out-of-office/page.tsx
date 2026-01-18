@@ -153,7 +153,7 @@ export default function OutOfOfficePage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Out of Office</h1>
           <p className="mt-2 text-gray-600">
-            Block specific dates or date ranges when you're unavailable
+            Block specific dates or date ranges when you&apos;re unavailable
           </p>
         </div>
 
@@ -319,7 +319,7 @@ export default function OutOfOfficePage() {
           <h3 className="font-semibold text-blue-900 mb-2">💡 Quick Tips</h3>
           <ul className="space-y-2 text-sm text-blue-800">
             <li>• Blocked dates will show no available time slots to bookers</li>
-            <li>• You'll be warned if you try to block dates with existing bookings</li>
+            <li>• You&apos;ll be warned if you try to block dates with existing bookings</li>
             <li>• Use date ranges for vacations or extended time off</li>
             <li>• Remove blocks anytime to re-open availability</li>
           </ul>
