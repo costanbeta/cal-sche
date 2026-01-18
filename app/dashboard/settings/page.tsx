@@ -18,12 +18,42 @@ interface CalendarConnection {
   createdAt: string
 }
 
+// Common timezones list
+const TIMEZONES = [
+  { value: 'UTC', label: 'UTC (Coordinated Universal Time)' },
+  { value: 'America/New_York', label: 'Eastern Time (US & Canada)' },
+  { value: 'America/Chicago', label: 'Central Time (US & Canada)' },
+  { value: 'America/Denver', label: 'Mountain Time (US & Canada)' },
+  { value: 'America/Los_Angeles', label: 'Pacific Time (US & Canada)' },
+  { value: 'America/Anchorage', label: 'Alaska' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii' },
+  { value: 'Europe/London', label: 'London' },
+  { value: 'Europe/Paris', label: 'Paris' },
+  { value: 'Europe/Berlin', label: 'Berlin' },
+  { value: 'Europe/Rome', label: 'Rome' },
+  { value: 'Europe/Madrid', label: 'Madrid' },
+  { value: 'Europe/Moscow', label: 'Moscow' },
+  { value: 'Asia/Dubai', label: 'Dubai' },
+  { value: 'Asia/Kolkata', label: 'India Standard Time (IST)' },
+  { value: 'Asia/Calcutta', label: 'Kolkata (IST)' },
+  { value: 'Asia/Shanghai', label: 'China Standard Time' },
+  { value: 'Asia/Tokyo', label: 'Tokyo' },
+  { value: 'Asia/Hong_Kong', label: 'Hong Kong' },
+  { value: 'Asia/Singapore', label: 'Singapore' },
+  { value: 'Australia/Sydney', label: 'Sydney' },
+  { value: 'Australia/Melbourne', label: 'Melbourne' },
+  { value: 'Pacific/Auckland', label: 'Auckland' },
+]
+
 export default function SettingsPage() {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [calendarConnection, setCalendarConnection] = useState<CalendarConnection | null>(null)
   const [loading, setLoading] = useState(true)
   const [disconnecting, setDisconnecting] = useState(false)
+  const [editingTimezone, setEditingTimezone] = useState(false)
+  const [selectedTimezone, setSelectedTimezone] = useState('')
+  const [savingTimezone, setSavingTimezone] = useState(false)
 
   const fetchCalendarConnection = useCallback(async (userId: string) => {
     // This would need a new API endpoint to check calendar connection
@@ -52,6 +82,7 @@ export default function SettingsPage() {
       }
       const userData = await userRes.json()
       setUser(userData.user)
+      setSelectedTimezone(userData.user.timezone)
 
       // Fetch calendar connection
       // We'll need to create an API endpoint for this
@@ -109,6 +140,42 @@ export default function SettingsPage() {
     }
   }
 
+  const handleSaveTimezone = async () => {
+    if (!selectedTimezone) return
+
+    setSavingTimezone(true)
+    try {
+      const response = await fetch('/api/users/settings', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          timezone: selectedTimezone,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data.user)
+        setEditingTimezone(false)
+        alert('Timezone updated successfully')
+      } else {
+        alert('Failed to update timezone')
+      }
+    } catch (error) {
+      console.error('Failed to update timezone:', error)
+      alert('Failed to update timezone')
+    } finally {
+      setSavingTimezone(false)
+    }
+  }
+
+  const handleCancelTimezoneEdit = () => {
+    setSelectedTimezone(user?.timezone || 'UTC')
+    setEditingTimezone(false)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -152,7 +219,50 @@ export default function SettingsPage() {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Timezone</label>
-              <p className="text-gray-900 mt-1">{user?.timezone}</p>
+              {editingTimezone ? (
+                <div className="mt-2 space-y-3">
+                  <select
+                    value={selectedTimezone}
+                    onChange={(e) => setSelectedTimezone(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {TIMEZONES.map((tz) => (
+                      <option key={tz.value} value={tz.value}>
+                        {tz.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSaveTimezone}
+                      disabled={savingTimezone}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                    >
+                      {savingTimezone ? 'Saving...' : 'Save'}
+                    </button>
+                    <button
+                      onClick={handleCancelTimezoneEdit}
+                      disabled={savingTimezone}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-gray-900">{user?.timezone}</p>
+                  <button
+                    onClick={() => setEditingTimezone(true)}
+                    className="text-sm text-blue-600 hover:text-blue-700"
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                This timezone will be used for displaying times in emails and bookings
+              </p>
             </div>
           </div>
         </div>

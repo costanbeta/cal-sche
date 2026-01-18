@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer'
-import { format } from 'date-fns'
+import { formatInTimeZone } from 'date-fns-tz'
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_SERVER_HOST,
@@ -41,7 +41,11 @@ export interface BookingConfirmationData {
 export async function sendBookingConfirmation(
   data: BookingConfirmationData
 ): Promise<void> {
-  const formattedDate = format(data.startTime, "EEEE, MMMM d, yyyy 'at' h:mm a")
+  const formattedDate = formatInTimeZone(
+    data.startTime,
+    data.timezone,
+    "EEEE, MMMM d, yyyy 'at' h:mm a"
+  )
   
   const html = `
     <!DOCTYPE html>
@@ -123,7 +127,11 @@ export async function sendBookingConfirmation(
 export async function sendBookingNotification(
   data: BookingConfirmationData & { hostEmail: string }
 ): Promise<void> {
-  const formattedDate = format(data.startTime, "EEEE, MMMM d, yyyy 'at' h:mm a")
+  const formattedDate = formatInTimeZone(
+    data.startTime,
+    data.timezone,
+    "EEEE, MMMM d, yyyy 'at' h:mm a"
+  )
   
   const html = `
     <!DOCTYPE html>
@@ -195,7 +203,11 @@ export async function sendBookingNotification(
 export async function sendMeetingReminder(
   data: BookingConfirmationData
 ): Promise<void> {
-  const formattedDate = format(data.startTime, "EEEE, MMMM d, yyyy 'at' h:mm a")
+  const formattedDate = formatInTimeZone(
+    data.startTime,
+    data.timezone,
+    "EEEE, MMMM d, yyyy 'at' h:mm a"
+  )
   
   const html = `
     <!DOCTYPE html>
@@ -218,7 +230,7 @@ export async function sendMeetingReminder(
             <p>This is a reminder about your upcoming meeting with <strong>${data.hostName}</strong></p>
             
             <p><strong>📅 ${data.eventName}</strong></p>
-            <p><strong>🕐</strong> Tomorrow at ${format(data.startTime, 'h:mm a')}</p>
+            <p><strong>🕐</strong> Tomorrow at ${formatInTimeZone(data.startTime, data.timezone, 'h:mm a')}</p>
             <p><strong>⏱️</strong> ${data.duration} minutes</p>
             
             <p style="margin-top: 30px;">See you then!</p>

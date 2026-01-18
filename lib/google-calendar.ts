@@ -1,4 +1,5 @@
 import { google } from 'googleapis'
+import { formatInTimeZone } from 'date-fns-tz'
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -107,17 +108,22 @@ export async function createGoogleCalendarEvent(
 
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client })
 
+    // Format datetime as local time in the target timezone (not UTC)
+    // Google Calendar API expects local datetime when timezone is specified
+    const startDateTime = formatInTimeZone(event.startTime, event.timezone, "yyyy-MM-dd'T'HH:mm:ss")
+    const endDateTime = formatInTimeZone(event.endTime, event.timezone, "yyyy-MM-dd'T'HH:mm:ss")
+
     const response = await calendar.events.insert({
       calendarId: 'primary',
       requestBody: {
         summary: event.summary,
         description: event.description,
         start: {
-          dateTime: event.startTime.toISOString(),
+          dateTime: startDateTime,
           timeZone: event.timezone,
         },
         end: {
-          dateTime: event.endTime.toISOString(),
+          dateTime: endDateTime,
           timeZone: event.timezone,
         },
         attendees: [
@@ -196,20 +202,23 @@ export async function updateGoogleCalendarEvent(
       eventId,
     })
 
+    // Get timezone for the event
+    const timezone = updates.timezone || event.data.start?.timeZone || 'UTC'
+
     const updatedEvent = {
       ...event.data,
       ...(updates.summary && { summary: updates.summary }),
       ...(updates.description && { description: updates.description }),
       ...(updates.startTime && {
         start: {
-          dateTime: updates.startTime.toISOString(),
-          timeZone: updates.timezone || event.data.start?.timeZone,
+          dateTime: formatInTimeZone(updates.startTime, timezone, "yyyy-MM-dd'T'HH:mm:ss"),
+          timeZone: timezone,
         },
       }),
       ...(updates.endTime && {
         end: {
-          dateTime: updates.endTime.toISOString(),
-          timeZone: updates.timezone || event.data.end?.timeZone,
+          dateTime: formatInTimeZone(updates.endTime, timezone, "yyyy-MM-dd'T'HH:mm:ss"),
+          timeZone: timezone,
         },
       }),
     }
