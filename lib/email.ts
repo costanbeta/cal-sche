@@ -282,3 +282,69 @@ export async function sendCancellationEmail(
     html,
   })
 }
+
+/**
+ * Send password reset email
+ */
+export async function sendPasswordResetEmail(
+  email: string,
+  name: string,
+  resetToken: string
+): Promise<void> {
+  const resetUrl = `${process.env.APP_URL}/auth/reset-password?token=${resetToken}`
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #3b82f6; color: white; padding: 20px; text-align: center; }
+          .content { background-color: #f9fafb; padding: 30px; }
+          .button { display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+          .warning { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
+          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔒 Password Reset Request</h1>
+          </div>
+          <div class="content">
+            <h2>Hi ${name},</h2>
+            <p>We received a request to reset your password. Click the button below to create a new password:</p>
+            
+            <div style="text-align: center;">
+              <a href="${resetUrl}" class="button">
+                Reset Password
+              </a>
+            </div>
+            
+            <div class="warning">
+              <p><strong>⚠️ Important:</strong></p>
+              <p>This link will expire in 1 hour for security reasons.</p>
+              <p>If you didn't request this password reset, please ignore this email or contact support if you have concerns.</p>
+            </div>
+            
+            <p style="color: #666; font-size: 14px;">
+              If the button doesn't work, copy and paste this link into your browser:<br/>
+              <a href="${resetUrl}" style="color: #3b82f6; word-break: break-all;">${resetUrl}</a>
+            </p>
+          </div>
+          <div class="footer">
+            <p>Powered by ${process.env.APP_NAME || 'SchedulePro'}</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `
+  
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: 'Reset Your Password',
+    html,
+  })
+}

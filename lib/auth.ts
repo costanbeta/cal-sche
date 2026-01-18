@@ -81,3 +81,11 @@ export function generateSlug(text: string): string {
     .replace(/-+/g, '-')
     .trim()
 }
+
+/**
+ * Generate a secure reset token
+ */
+export function generateResetToken(): string {
+  const crypto = require('crypto')
+  return crypto.randomBytes(32).toString('hex')
+}
