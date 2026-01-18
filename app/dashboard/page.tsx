@@ -283,7 +283,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-8 grid md:grid-cols-3 gap-6">
+        <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Link
             href="/dashboard/availability"
             className="p-6 bg-white rounded-lg shadow hover:shadow-lg transition text-center"
@@ -292,6 +292,16 @@ export default function DashboardPage() {
             <h3 className="font-bold text-lg mb-2">Set Availability</h3>
             <p className="text-gray-600 text-sm">
               Configure your working hours and time preferences
+            </p>
+          </Link>
+          <Link
+            href="/dashboard/out-of-office"
+            className="p-6 bg-white rounded-lg shadow hover:shadow-lg transition text-center border-2 border-red-100"
+          >
+            <div className="text-4xl mb-2">🏖️</div>
+            <h3 className="font-bold text-lg mb-2">Out of Office</h3>
+            <p className="text-gray-600 text-sm">
+              Block dates when you're unavailable
             </p>
           </Link>
           <Link
