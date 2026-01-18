@@ -113,7 +113,7 @@ export default function UserProfilePage() {
   const showPoweredBy = !profile.branding?.hidePoweredBy
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-[#0a0a0a] py-12">
       <style jsx>{`
         .brand-hover-border:hover {
           border-color: ${brandColor} !important;
@@ -129,9 +129,9 @@ export default function UserProfilePage() {
       <div className="max-w-4xl mx-auto px-4">
         {/* User Header */}
         <div className="text-center mb-12">
-          {/* Custom Brand Logo */}
-          {profile.branding?.brandLogoUrl && (
-            <div className="flex justify-center mb-6">
+          {/* Custom Brand Logo or Profile Picture */}
+          <div className="flex justify-center mb-6">
+            {profile.branding?.brandLogoUrl ? (
               <img 
                 src={profile.branding.brandLogoUrl} 
                 alt={profile.branding.brandName || profile.name}
@@ -140,63 +140,55 @@ export default function UserProfilePage() {
                   e.currentTarget.style.display = 'none'
                 }}
               />
-            </div>
-          )}
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white text-3xl font-bold border-4 border-gray-700">
+                {profile.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
 
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          <h1 className="text-4xl font-bold text-white mb-2">
             {profile.branding?.brandName || profile.name}
           </h1>
-          <p className="text-gray-600">
-            @{profile.username}
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Select an event type to book a meeting
-          </p>
         </div>
 
-        {/* Event Types Grid */}
-        <div className="grid md:grid-cols-2 gap-6">
+        {/* Event Types - Modern Cards */}
+        <div className="space-y-4 max-w-2xl mx-auto">
           {profile.eventTypes.map((eventType) => (
             <Link
               key={eventType.id}
               href={`/${username}/${eventType.slug}`}
-              className="block bg-white rounded-lg shadow hover:shadow-lg transition p-6 border-2 border-transparent brand-hover-border"
+              className="block bg-[#1a1a1a] rounded-xl hover:bg-[#242424] transition-all duration-200 p-6 border border-gray-800 hover:border-gray-700"
             >
-              <div className="flex items-start gap-4">
-                {/* Color indicator */}
-                <div
-                  className="w-12 h-12 rounded-lg flex-shrink-0"
-                  style={{ backgroundColor: eventType.color }}
-                />
-                
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold text-white mb-2">
                     {eventType.name}
                   </h3>
                   
-                  {eventType.description && (
-                    <p className="text-gray-600 mb-3 line-clamp-2">
-                      {eventType.description}
-                    </p>
-                  )}
-                  
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <span>⏱️</span>
-                      <span>{eventType.duration} min</span>
+                  <div className="flex items-center gap-4 text-sm text-gray-400">
+                    <div className="flex items-center gap-1.5">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>{eventType.duration}m</span>
                     </div>
                     
                     {eventType.location && (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5 bg-gray-800 px-3 py-1 rounded-full">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          {(eventType.location === 'zoom' || eventType.location === 'google_meet' || eventType.location === 'custom') && (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          )}
+                          {eventType.location === 'phone' && (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          )}
+                          {eventType.location === 'in_person' && (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                          )}
+                        </svg>
                         <span>
-                          {eventType.location === 'zoom' && '📹'}
-                          {eventType.location === 'google_meet' && '📹'}
-                          {eventType.location === 'phone' && '📞'}
-                          {eventType.location === 'in_person' && '🏢'}
-                          {eventType.location === 'custom' && '🔗'}
-                        </span>
-                        <span>
-                          {eventType.location === 'zoom' && 'Zoom'}
+                          {eventType.location === 'zoom' && 'Video Call'}
                           {eventType.location === 'google_meet' && 'Google Meet'}
                           {eventType.location === 'phone' && 'Phone'}
                           {eventType.location === 'in_person' && 'In Person'}
@@ -205,22 +197,6 @@ export default function UserProfilePage() {
                       </div>
                     )}
                   </div>
-                </div>
-                
-                <div className="brand-text-color flex-shrink-0">
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
                 </div>
               </div>
             </Link>
