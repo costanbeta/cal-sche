@@ -38,6 +38,19 @@ export async function GET(request: NextRequest) {
         timezone: true,
         avatarUrl: true,
         createdAt: true,
+        // Subscription fields
+        subscriptionTier: true,
+        subscriptionStatus: true,
+        razorpaySubscriptionId: true,
+        currentPeriodStart: true,
+        currentPeriodEnd: true,
+        cancelAtPeriodEnd: true,
+        // Branding fields
+        brandLogoUrl: true,
+        brandColor: true,
+        brandName: true,
+        hidePoweredBy: true,
+        customFooterText: true,
       },
     })
     
@@ -48,7 +61,19 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    return NextResponse.json({ user })
+    // Format response with branding settings
+    return NextResponse.json({
+      user: {
+        ...user,
+        branding: {
+          brandLogoUrl: user.brandLogoUrl,
+          brandColor: user.brandColor || '#2563EB',
+          brandName: user.brandName,
+          hidePoweredBy: user.hidePoweredBy,
+          customFooterText: user.customFooterText,
+        },
+      },
+    })
     
   } catch (error) {
     console.error('Auth check error:', error)

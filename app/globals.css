@@ -6,6 +6,17 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  
+  /* Brand Colors */
+  --brand-primary: #2563EB;
+  --brand-primary-dark: #1D4ED8;
+  --brand-primary-light: #3B82F6;
+  --brand-secondary: #7C3AED;
+  --brand-accent: #F59E0B;
+  --brand-success: #10B981;
+  --brand-error: #EF4444;
+  --brand-warning: #F59E0B;
+  --brand-info: #3B82F6;
 }
 
 body {
@@ -21,5 +32,32 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  .brand-gradient {
+    background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+  }
+  
+  .brand-shadow {
+    box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.15);
+  }
+}
+
+@layer components {
+  .btn-brand-primary {
+    @apply bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold;
+    @apply hover:bg-blue-700 transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+  
+  .btn-brand-secondary {
+    @apply bg-white text-blue-600 border-2 border-blue-600 px-6 py-2 rounded-lg font-semibold;
+    @apply hover:bg-blue-50 transition-all duration-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+  
+  .card-brand {
+    @apply bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300;
+    @apply border border-gray-100;
   }
 }

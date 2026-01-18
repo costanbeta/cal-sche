@@ -10,30 +10,37 @@ generator client {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  username  String   @unique
-  password  String
-  timezone  String   @default("UTC")
-  avatarUrl String?  @map("avatar_url")
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String
+  username      String    @unique
+  password      String
+  timezone      String    @default("UTC")
+  avatarUrl     String?   @map("avatar_url")
   emailVerified DateTime? @map("email_verified")
-  
+
   // Password reset
-  resetToken        String?   @map("reset_token")
-  resetTokenExpiry  DateTime? @map("reset_token_expiry")
-  
+  resetToken       String?   @map("reset_token")
+  resetTokenExpiry DateTime? @map("reset_token_expiry")
+
   // Subscription fields
-  subscriptionTier           String?  @default("free") @map("subscription_tier")
-  subscriptionStatus         String?  @default("active") @map("subscription_status")
-  razorpaySubscriptionId     String?  @map("razorpay_subscription_id")
-  razorpayCustomerId         String?  @map("razorpay_customer_id")
-  razorpayPlanId             String?  @map("razorpay_plan_id")
-  currentPeriodStart         DateTime? @map("current_period_start")
-  currentPeriodEnd           DateTime? @map("current_period_end")
-  cancelAtPeriodEnd          Boolean  @default(false) @map("cancel_at_period_end")
-  trialEndsAt                DateTime? @map("trial_ends_at")
-  
+  subscriptionTier       String?   @default("free") @map("subscription_tier")
+  subscriptionStatus     String?   @default("active") @map("subscription_status")
+  razorpaySubscriptionId String?   @map("razorpay_subscription_id")
+  razorpayCustomerId     String?   @map("razorpay_customer_id")
+  razorpayPlanId         String?   @map("razorpay_plan_id")
+  currentPeriodStart     DateTime? @map("current_period_start")
+  currentPeriodEnd       DateTime? @map("current_period_end")
+  cancelAtPeriodEnd      Boolean   @default(false) @map("cancel_at_period_end")
+  trialEndsAt            DateTime? @map("trial_ends_at")
+
+  // Custom Branding (Pro/Business feature)
+  brandLogoUrl     String? @map("brand_logo_url")
+  brandColor       String? @default("#2563EB") @map("brand_color")
+  brandName        String? @map("brand_name")
+  hidePoweredBy    Boolean @default(false) @map("hide_powered_by")
+  customFooterText String? @map("custom_footer_text")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -51,22 +58,22 @@ model User {
 }
 
 model EventType {
-  id          String    @id @default(uuid())
-  userId      String    @map("user_id")
+  id          String  @id @default(uuid())
+  userId      String  @map("user_id")
   name        String
   slug        String
   description String?
-  duration    Int       // in minutes
-  color       String    @default("#3B82F6")
-  isActive    Boolean   @default(true) @map("is_active")
-  location    String?   // zoom, google_meet, phone, in_person, custom
-  meetingLink String?   @map("meeting_link")
-  
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  duration    Int // in minutes
+  color       String  @default("#3B82F6")
+  isActive    Boolean @default(true) @map("is_active")
+  location    String? // zoom, google_meet, phone, in_person, custom
+  meetingLink String? @map("meeting_link")
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bookings    Booking[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings Booking[]
 
   @@unique([userId, slug])
   @@index([userId])
@@ -74,16 +81,16 @@ model EventType {
 }
 
 model Availability {
-  id         String   @id @default(uuid())
-  userId     String   @map("user_id")
-  dayOfWeek  Int      @map("day_of_week") // 0 = Sunday, 6 = Saturday
-  startTime  String   @map("start_time")  // Format: "09:00"
-  endTime    String   @map("end_time")    // Format: "17:00"
-  timezone   String   @default("UTC")
-  
-  createdAt  DateTime @default(now()) @map("created_at")
+  id        String @id @default(uuid())
+  userId    String @map("user_id")
+  dayOfWeek Int    @map("day_of_week") // 0 = Sunday, 6 = Saturday
+  startTime String @map("start_time") // Format: "09:00"
+  endTime   String @map("end_time") // Format: "17:00"
+  timezone  String @default("UTC")
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("availability")
@@ -96,10 +103,10 @@ model DateOverride {
   isAvailable Boolean  @default(false) @map("is_available")
   startTime   String?  @map("start_time")
   endTime     String?  @map("end_time")
-  
-  createdAt   DateTime @default(now()) @map("created_at")
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("date_overrides")
 }
@@ -117,12 +124,12 @@ model Booking {
   status             String   @default("confirmed")
   googleEventId      String?  @map("google_event_id")
   cancellationReason String?  @map("cancellation_reason")
-  
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
 
-  eventType          EventType @relation(fields: [eventTypeId], references: [id], onDelete: Cascade)
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  eventType EventType @relation(fields: [eventTypeId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([eventTypeId])
@@ -133,37 +140,37 @@ model Booking {
 model CalendarConnection {
   id             String    @id @default(uuid())
   userId         String    @map("user_id")
-  provider       String    // google, outlook
+  provider       String // google, outlook
   accessToken    String    @map("access_token")
   refreshToken   String    @map("refresh_token")
   tokenExpiresAt DateTime? @map("token_expires_at")
   calendarId     String?   @map("calendar_id")
   isPrimary      Boolean   @default(true) @map("is_primary")
-  
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("calendar_connections")
 }
 
 model Account {
-  id                  String  @id @default(uuid())
-  userId              String  @map("user_id")
-  type                String
-  provider            String
-  providerAccountId   String  @map("provider_account_id")
-  refreshToken        String? @map("refresh_token")
-  accessToken         String? @map("access_token")
-  expiresAt           Int?    @map("expires_at")
-  tokenType           String? @map("token_type")
-  scope               String?
-  idToken             String? @map("id_token")
-  sessionState        String? @map("session_state")
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refreshToken      String? @map("refresh_token")
+  accessToken       String? @map("access_token")
+  expiresAt         Int?    @map("expires_at")
+  tokenType         String? @map("token_type")
+  scope             String?
+  idToken           String? @map("id_token")
+  sessionState      String? @map("session_state")
 
-  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -175,66 +182,66 @@ model Session {
   userId       String   @map("user_id")
   expires      DateTime
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
 
 model PricingPlan {
-  id                      String   @id @default(uuid())
-  name                    String   @unique
-  displayName             String   @map("display_name")
-  description             String?
-  monthlyPrice            Decimal  @map("monthly_price") @db.Decimal(10, 2)
-  yearlyPrice             Decimal  @map("yearly_price") @db.Decimal(10, 2)
-  currency                String   @default("INR")
-  features                Json
-  limits                  Json
-  razorpayPlanIdMonthly   String?  @map("razorpay_plan_id_monthly")
-  razorpayPlanIdYearly    String?  @map("razorpay_plan_id_yearly")
-  isActive                Boolean  @default(true) @map("is_active")
-  sortOrder               Int      @default(0) @map("sort_order")
-  
-  createdAt               DateTime @default(now()) @map("created_at")
-  updatedAt               DateTime @updatedAt @map("updated_at")
+  id                    String  @id @default(uuid())
+  name                  String  @unique
+  displayName           String  @map("display_name")
+  description           String?
+  monthlyPrice          Decimal @map("monthly_price") @db.Decimal(10, 2)
+  yearlyPrice           Decimal @map("yearly_price") @db.Decimal(10, 2)
+  currency              String  @default("INR")
+  features              Json
+  limits                Json
+  razorpayPlanIdMonthly String? @map("razorpay_plan_id_monthly")
+  razorpayPlanIdYearly  String? @map("razorpay_plan_id_yearly")
+  isActive              Boolean @default(true) @map("is_active")
+  sortOrder             Int     @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("pricing_plans")
 }
 
 model SubscriptionHistory {
-  id               String   @id @default(uuid())
-  userId           String   @map("user_id")
-  action           String
-  fromTier         String?  @map("from_tier")
-  toTier           String   @map("to_tier")
-  amount           Decimal? @db.Decimal(10, 2)
-  currency         String   @default("INR")
-  paymentMethod    String?  @map("payment_method")
-  transactionId    String?  @map("transaction_id")
-  razorpayOrderId  String?  @map("razorpay_order_id")
-  metadata         Json?
-  
-  createdAt        DateTime @default(now()) @map("created_at")
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  action          String
+  fromTier        String?  @map("from_tier")
+  toTier          String   @map("to_tier")
+  amount          Decimal? @db.Decimal(10, 2)
+  currency        String   @default("INR")
+  paymentMethod   String?  @map("payment_method")
+  transactionId   String?  @map("transaction_id")
+  razorpayOrderId String?  @map("razorpay_order_id")
+  metadata        Json?
 
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@map("subscription_history")
 }
 
 model UsageMetric {
-  id           String   @id @default(uuid())
-  userId       String   @map("user_id")
-  metricType   String   @map("metric_type")
-  periodStart  DateTime @map("period_start")
-  periodEnd    DateTime @map("period_end")
-  count        Int      @default(0)
-  limit        Int?
-  
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  metricType  String   @map("metric_type")
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
+  count       Int      @default(0)
+  limit       Int?
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, metricType, periodStart])
   @@index([userId, periodStart])

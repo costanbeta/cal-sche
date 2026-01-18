@@ -6,7 +6,10 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'SchedulePro - Simple Meeting Scheduling',
-  description: 'Let anyone book time with you through a simple link',
+  description: 'Let anyone book time with you through a simple link. Professional scheduling made effortless.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({

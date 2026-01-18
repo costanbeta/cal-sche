@@ -17,6 +17,12 @@ export async function GET(
         name: true,
         username: true,
         timezone: true,
+        brandLogoUrl: true,
+        brandColor: true,
+        brandName: true,
+        hidePoweredBy: true,
+        customFooterText: true,
+        subscriptionTier: true,
         eventTypes: {
           where: {
             isActive: true,
@@ -49,6 +55,13 @@ export async function GET(
       username: user.username,
       timezone: user.timezone,
       eventTypes: user.eventTypes,
+      branding: {
+        brandLogoUrl: user.brandLogoUrl,
+        brandColor: user.brandColor || '#2563EB',
+        brandName: user.brandName,
+        hidePoweredBy: user.hidePoweredBy,
+        customFooterText: user.customFooterText,
+      },
     })
     
   } catch (error) {

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Logo from '@/components/Logo'
+import BrandedFooter from '@/components/BrandedFooter'
 
 interface EventType {
   id: string
@@ -14,11 +16,20 @@ interface EventType {
   location?: string
 }
 
+interface BrandingSettings {
+  brandLogoUrl?: string
+  brandColor?: string
+  brandName?: string
+  hidePoweredBy?: boolean
+  customFooterText?: string
+}
+
 interface UserProfile {
   name: string
   username: string
   timezone: string
   eventTypes: EventType[]
+  branding?: BrandingSettings
 }
 
 export default function UserProfilePage() {
@@ -98,13 +109,42 @@ export default function UserProfilePage() {
     )
   }
 
+  const brandColor = profile.branding?.brandColor || '#2563EB'
+  const showPoweredBy = !profile.branding?.hidePoweredBy
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
+      <style jsx>{`
+        .brand-hover-border:hover {
+          border-color: ${brandColor} !important;
+        }
+        .brand-text-color {
+          color: ${brandColor};
+        }
+        .brand-bg-color {
+          background-color: ${brandColor};
+        }
+      `}</style>
+
       <div className="max-w-4xl mx-auto px-4">
         {/* User Header */}
         <div className="text-center mb-12">
+          {/* Custom Brand Logo */}
+          {profile.branding?.brandLogoUrl && (
+            <div className="flex justify-center mb-6">
+              <img 
+                src={profile.branding.brandLogoUrl} 
+                alt={profile.branding.brandName || profile.name}
+                className="max-w-[250px] max-h-[80px] object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                }}
+              />
+            </div>
+          )}
+
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            {profile.name}
+            {profile.branding?.brandName || profile.name}
           </h1>
           <p className="text-gray-600">
             @{profile.username}
@@ -120,7 +160,7 @@ export default function UserProfilePage() {
             <Link
               key={eventType.id}
               href={`/${username}/${eventType.slug}`}
-              className="block bg-white rounded-lg shadow hover:shadow-lg transition p-6 border-2 border-transparent hover:border-blue-500"
+              className="block bg-white rounded-lg shadow hover:shadow-lg transition p-6 border-2 border-transparent brand-hover-border"
             >
               <div className="flex items-start gap-4">
                 {/* Color indicator */}
@@ -167,7 +207,7 @@ export default function UserProfilePage() {
                   </div>
                 </div>
                 
-                <div className="text-blue-600 flex-shrink-0">
+                <div className="brand-text-color flex-shrink-0">
                   <svg
                     className="w-6 h-6"
                     fill="none"
@@ -187,10 +227,13 @@ export default function UserProfilePage() {
           ))}
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-12 text-gray-500 text-sm">
-          <p>Powered by {profile.name}&apos;s Scheduling App</p>
-        </div>
+        {/* Footer with Custom Branding */}
+        <BrandedFooter 
+          variant="minimal"
+          showPoweredBy={showPoweredBy}
+          customText={profile.branding?.customFooterText}
+          className="mt-12"
+        />
       </div>
     </div>
   )

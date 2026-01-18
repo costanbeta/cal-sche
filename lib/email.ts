@@ -33,6 +33,10 @@ export interface BookingConfirmationData {
   attendeeNotes?: string
   meetingLink?: string
   location?: string
+  // Custom branding
+  brandColor?: string
+  brandLogoUrl?: string
+  hidePoweredBy?: boolean
 }
 
 /**
@@ -47,6 +51,9 @@ export async function sendBookingConfirmation(
     "EEEE, MMMM d, yyyy 'at' h:mm a"
   )
   
+  const brandColor = data.brandColor || '#3b82f6'
+  const showPoweredBy = !data.hidePoweredBy
+  
   const html = `
     <!DOCTYPE html>
     <html>
@@ -54,16 +61,19 @@ export async function sendBookingConfirmation(
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background-color: #3b82f6; color: white; padding: 20px; text-align: center; }
+          .header { background-color: ${brandColor}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
           .content { background-color: #f9fafb; padding: 30px; }
-          .detail-box { background-color: white; padding: 20px; margin: 20px 0; border-radius: 8px; }
-          .button { display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
-          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+          .detail-box { background-color: white; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid ${brandColor}; }
+          .button { display: inline-block; background-color: ${brandColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
+          .button-cancel { background-color: #ef4444; }
+          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; border-top: 1px solid #e5e7eb; }
+          .logo { max-width: 150px; max-height: 50px; margin-bottom: 15px; }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
+            ${data.brandLogoUrl ? `<img src="${data.brandLogoUrl}" alt="Logo" class="logo" />` : ''}
             <h1>✓ Meeting Confirmed</h1>
           </div>
           <div class="content">
@@ -79,7 +89,7 @@ export async function sendBookingConfirmation(
               ${data.meetingLink ? `
                 <p style="margin-top: 12px;">
                   <strong>🔗 Meeting Link:</strong><br/>
-                  <a href="${data.meetingLink}" style="color: #3b82f6; text-decoration: none; word-break: break-all;">
+                  <a href="${data.meetingLink}" style="color: ${brandColor}; text-decoration: none; word-break: break-all;">
                     ${data.meetingLink}
                   </a>
                 </p>
@@ -94,7 +104,7 @@ export async function sendBookingConfirmation(
             ` : ''}
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.APP_URL}/booking/${data.bookingId}/cancel" class="button" style="background-color: #ef4444;">
+              <a href="${process.env.APP_URL}/booking/${data.bookingId}/cancel" class="button button-cancel">
                 Cancel Booking
               </a>
               <a href="${process.env.APP_URL}/booking/${data.bookingId}/reschedule" class="button">
@@ -106,7 +116,7 @@ export async function sendBookingConfirmation(
             <p>Best regards,<br>${data.hostName}</p>
           </div>
           <div class="footer">
-            <p>Powered by ${process.env.APP_NAME || 'SchedulePro'}</p>
+            ${showPoweredBy ? `<p>Powered by ${process.env.APP_NAME || 'SchedulePro'}</p>` : ''}
           </div>
         </div>
       </body>

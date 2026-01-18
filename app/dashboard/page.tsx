@@ -283,7 +283,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-8 grid md:grid-cols-2 gap-6">
+        <div className="mt-8 grid md:grid-cols-3 gap-6">
           <Link
             href="/dashboard/availability"
             className="p-6 bg-white rounded-lg shadow hover:shadow-lg transition text-center"
@@ -303,6 +303,19 @@ export default function DashboardPage() {
             <p className="text-gray-600 text-sm">
               View and manage all your bookings
             </p>
+          </Link>
+          <Link
+            href="/dashboard/branding"
+            className="p-6 bg-white rounded-lg shadow hover:shadow-lg transition text-center border-2 border-purple-200"
+          >
+            <div className="text-4xl mb-2">🎨</div>
+            <h3 className="font-bold text-lg mb-2">Custom Branding</h3>
+            <p className="text-gray-600 text-sm">
+              Customize your booking page with your brand
+            </p>
+            <span className="inline-block mt-2 text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+              Pro/Business
+            </span>
           </Link>
         </div>
       </main>

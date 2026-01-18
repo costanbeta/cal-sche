@@ -9,6 +9,15 @@ export interface User {
   updatedAt: Date
   subscriptionTier?: SubscriptionTier
   subscriptionStatus?: SubscriptionStatus
+  branding?: BrandingSettings
+}
+
+export interface BrandingSettings {
+  brandLogoUrl?: string
+  brandColor?: string
+  brandName?: string
+  hidePoweredBy?: boolean
+  customFooterText?: string
 }
 
 export type SubscriptionTier = 'free' | 'pro' | 'business'
