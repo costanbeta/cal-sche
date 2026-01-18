@@ -229,7 +229,7 @@ export default function HomePage() {
                   </svg>
                 ))}
               </div>
-              <p className="text-gray-600 mb-4">"SchedulePro saved me hours every week. No more email ping-pong!"</p>
+              <p className="text-gray-600 mb-4">&quot;SchedulePro saved me hours every week. No more email ping-pong!&quot;</p>
               <p className="font-bold">Sarah Johnson</p>
               <p className="text-sm text-gray-500">Marketing Consultant</p>
             </div>
@@ -242,7 +242,7 @@ export default function HomePage() {
                   </svg>
                 ))}
               </div>
-              <p className="text-gray-600 mb-4">"The custom branding feature makes my booking page look so professional!"</p>
+              <p className="text-gray-600 mb-4">&quot;The custom branding feature makes my booking page look so professional!&quot;</p>
               <p className="font-bold">Michael Chen</p>
               <p className="text-sm text-gray-500">Freelance Designer</p>
             </div>
@@ -255,7 +255,7 @@ export default function HomePage() {
                   </svg>
                 ))}
               </div>
-              <p className="text-gray-600 mb-4">"Simple, powerful, and exactly what I needed for my coaching business."</p>
+              <p className="text-gray-600 mb-4">&quot;Simple, powerful, and exactly what I needed for my coaching business.&quot;</p>
               <p className="font-bold">Emily Rodriguez</p>
               <p className="text-sm text-gray-500">Life Coach</p>
             </div>

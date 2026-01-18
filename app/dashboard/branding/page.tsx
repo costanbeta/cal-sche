@@ -38,10 +38,6 @@ export default function BrandingSettingsPage() {
   const canUseBranding = isPro || isBusiness
   const canHidePoweredBy = isBusiness
 
-  useEffect(() => {
-    fetchUserData()
-  }, [])
-
   const fetchUserData = async () => {
     try {
       const response = await fetch('/api/auth/me')
@@ -67,6 +63,11 @@ export default function BrandingSettingsPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    fetchUserData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -266,7 +267,7 @@ export default function BrandingSettingsPage() {
                       htmlFor="hidePoweredBy" 
                       className="text-sm font-medium text-gray-700 cursor-pointer"
                     >
-                      Hide "Powered by SchedulePro"
+                      Hide &quot;Powered by SchedulePro&quot;
                     </label>
                     <p className="text-xs text-gray-500 mt-1">
                       {canHidePoweredBy 
