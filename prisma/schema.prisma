@@ -19,6 +19,10 @@ model User {
   avatarUrl     String?   @map("avatar_url")
   emailVerified DateTime? @map("email_verified")
 
+  // Email verification
+  verificationToken       String?   @map("verification_token")
+  verificationTokenExpiry DateTime? @map("verification_token_expiry")
+
   // Password reset
   resetToken       String?   @map("reset_token")
   resetTokenExpiry DateTime? @map("reset_token_expiry")

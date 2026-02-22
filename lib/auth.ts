@@ -89,3 +89,11 @@ export function generateResetToken(): string {
   const crypto = require('crypto')
   return crypto.randomBytes(32).toString('hex')
 }
+
+/**
+ * Generate a secure email verification token
+ */
+export function generateVerificationToken(): string {
+  const crypto = require('crypto')
+  return crypto.randomBytes(32).toString('hex')
+}

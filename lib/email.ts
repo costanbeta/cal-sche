@@ -370,3 +370,69 @@ export async function sendPasswordResetEmail(
     html,
   })
 }
+
+/**
+ * Send email verification email
+ */
+export async function sendEmailVerification(
+  email: string,
+  name: string,
+  verificationToken: string
+): Promise<void> {
+  const verificationUrl = `${process.env.APP_URL}/auth/verify-email?token=${verificationToken}`
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #3b82f6; color: white; padding: 20px; text-align: center; }
+          .content { background-color: #f9fafb; padding: 30px; }
+          .button { display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+          .info { background-color: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; }
+          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>✉️ Verify Your Email Address</h1>
+          </div>
+          <div class="content">
+            <h2>Hi ${name},</h2>
+            <p>Welcome to ${process.env.APP_NAME || 'Croodle'}! Please verify your email address to get started.</p>
+            
+            <div style="text-align: center;">
+              <a href="${verificationUrl}" class="button">
+                Verify Email Address
+              </a>
+            </div>
+            
+            <div class="info">
+              <p><strong>ℹ️ Note:</strong></p>
+              <p>This verification link will expire in 24 hours.</p>
+              <p>If you didn't create an account, you can safely ignore this email.</p>
+            </div>
+            
+            <p style="color: #666; font-size: 14px;">
+              If the button doesn't work, copy and paste this link into your browser:<br/>
+              <a href="${verificationUrl}" style="color: #3b82f6; word-break: break-all;">${verificationUrl}</a>
+            </p>
+          </div>
+          <div class="footer">
+            <p>Powered by ${process.env.APP_NAME || 'SchedulePro'}</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `
+  
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: 'Verify Your Email Address',
+    html,
+  })
+}

@@ -3,6 +3,13 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Loader2, Eye, LogIn } from 'lucide-react'
+
+import Logo from '@/components/Logo'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 function ResetPasswordForm() {
   const router = useRouter()
@@ -19,6 +26,8 @@ function ResetPasswordForm() {
   const [success, setSuccess] = useState(false)
   const [tokenValid, setTokenValid] = useState(false)
   const [userEmail, setUserEmail] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   useEffect(() => {
     if (!token) {
@@ -103,10 +112,10 @@ function ResetPasswordForm() {
 
   if (verifying) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Verifying reset link...</p>
+      <div className="flex min-h-screen bg-black items-center justify-center p-4">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-white mx-auto mb-4" />
+          <p className="text-neutral-400">Verifying reset link...</p>
         </div>
       </div>
     )
@@ -114,48 +123,80 @@ function ResetPasswordForm() {
 
   if (!tokenValid) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
-              <svg
-                className="w-8 h-8 text-red-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+      <div className="flex min-h-screen bg-black">
+        {/* Left Side - Branding */}
+        <div className="hidden lg:flex lg:w-[640px] relative bg-neutral-800 overflow-hidden">
+          <div className="absolute inset-0">
+            <div 
+              className="absolute inset-0"
+              style={{
+                backgroundImage: 'url("/signup-bg.png")',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            >
+              <div className="absolute inset-0 bg-black/20" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Invalid Reset Link</h1>
-            <p className="text-gray-600">{error}</p>
           </div>
 
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-lg text-sm mb-6">
-            <p className="font-semibold mb-1">⚠️ Common reasons:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>The link has expired (valid for 1 hour)</li>
-              <li>The link has already been used</li>
-              <li>The link is malformed</li>
-            </ul>
-          </div>
-
-          <Link
-            href="/auth/forgot-password"
-            className="block w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition text-center"
-          >
-            Request New Reset Link
-          </Link>
-
-          <div className="mt-4 text-center">
-            <Link href="/auth/login" className="text-sm text-gray-600 hover:underline">
-              Back to Login
+          <div className="relative z-10 flex flex-col justify-between p-8 w-full">
+            <Link href="/">
+              <Logo size="md" showText={true} />
             </Link>
+
+            <div className="text-white">
+              <p className="text-base leading-relaxed">
+                "This library has saved me countless hours of work and helped me deliver stunning designs to my clients faster than ever before." - Sofia Davis
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side - Error */}
+        <div className="flex-1 flex items-center justify-center p-8 bg-black">
+          <div className="w-full max-w-[400px] space-y-6">
+            <div className="text-center space-y-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-red-950/50 rounded-full border border-red-900">
+                <svg
+                  className="w-8 h-8 text-red-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-semibold text-white">Invalid Reset Link</h1>
+              <p className="text-sm text-neutral-400">{error}</p>
+            </div>
+
+            <Alert className="bg-yellow-950/50 border-yellow-900">
+              <AlertDescription className="text-yellow-200">
+                <p className="font-semibold mb-2 text-sm">⚠️ Common reasons:</p>
+                <ul className="list-disc list-inside space-y-1 text-xs text-yellow-300">
+                  <li>The link has expired (valid for 1 hour)</li>
+                  <li>The link has already been used</li>
+                  <li>The link is malformed</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+
+            <Button asChild className="w-full h-9 bg-white text-black hover:bg-neutral-100">
+              <Link href="/auth/forgot-password">
+                Request New Reset Link
+              </Link>
+            </Button>
+
+            <div className="text-center">
+              <Link href="/auth/login" className="text-sm text-neutral-400 hover:text-white transition-colors">
+                Back to Login
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -163,121 +204,163 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-            <svg
-              className="w-8 h-8 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-              />
-            </svg>
+    <div className="flex min-h-screen bg-black">
+      {/* Left Side - Branding with Image Background */}
+      <div className="hidden lg:flex lg:w-[640px] relative bg-neutral-800 overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0"
+            style={{
+              backgroundImage: 'url("/signup-bg.png")',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          >
+            <div className="absolute inset-0 bg-black/20" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Reset Password</h1>
-          <p className="text-gray-600 mt-2">
-            Create a new password for <strong>{userEmail}</strong>
-          </p>
         </div>
 
-        {success ? (
-          <div className="space-y-6">
-            <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg">
-              <div className="flex items-start">
-                <svg
-                  className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <div>
-                  <p className="font-semibold">Password Reset Successful!</p>
-                  <p className="text-sm mt-1">
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-between p-8 w-full">
+          {/* Logo */}
+          <Link href="/">
+            <Logo size="md" showText={true} />
+          </Link>
+
+          {/* Testimonial */}
+          <div className="text-white">
+            <p className="text-base leading-relaxed">
+              "This library has saved me countless hours of work and helped me deliver stunning designs to my clients faster than ever before." - Sofia Davis
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Reset Password Form */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-black">
+        <div className="w-full max-w-[350px] space-y-6">
+          {/* Form Title */}
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold text-white tracking-tight">
+              Reset Password
+            </h1>
+            <p className="text-sm text-neutral-400">
+              Create a new password for <strong>{userEmail}</strong>
+            </p>
+          </div>
+
+          {success ? (
+            <div className="space-y-6">
+              <Alert className="bg-green-950/50 border-green-900">
+                <AlertDescription className="text-green-200">
+                  <p className="font-semibold mb-1">Password Reset Successful!</p>
+                  <p className="text-sm">
                     Redirecting you to login page...
                   </p>
+                </AlertDescription>
+              </Alert>
+
+              <Button asChild className="w-full h-9 bg-white text-black hover:bg-neutral-100">
+                <Link href="/auth/login">
+                  Go to Login
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <Alert variant="destructive" className="bg-red-950/50 border-red-900">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {/* New Password */}
+              <div className="space-y-3">
+                <Label htmlFor="password" className="text-xs text-white">
+                  New password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="••••••••"
+                    className="h-9 bg-white/5 border-neutral-700 text-white placeholder:text-neutral-500 focus-visible:ring-neutral-600 pr-10"
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-200 transition-colors"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
-            </div>
 
-            <Link
-              href="/auth/login"
-              className="block w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition text-center"
-            >
-              Go to Login
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
-                {error}
+              {/* Confirm Password */}
+              <div className="space-y-3">
+                <Label htmlFor="confirmPassword" className="text-xs text-white">
+                  Confirm New Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    required
+                    value={formData.confirmPassword}
+                    onChange={(e) =>
+                      setFormData({ ...formData, confirmPassword: e.target.value })
+                    }
+                    placeholder="••••••••"
+                    className="h-9 bg-white/5 border-neutral-700 text-white placeholder:text-neutral-500 focus-visible:ring-neutral-600 pr-10"
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-200 transition-colors"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-            )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                New Password
-              </label>
-              <input
-                type="password"
-                required
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-                minLength={8}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Must be at least 8 characters long
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-9 bg-white text-black hover:bg-neutral-100 font-semibold"
+              >
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {loading ? 'Resetting Password...' : 'Reset Password'}
+              </Button>
+            </form>
+          )}
+
+          {/* Did you remember password */}
+          {!success && (
+            <div className="flex flex-col items-center gap-1 pt-2">
+              <p className="text-xs text-white">
+                Did you remember password?
               </p>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                asChild
+                className="h-9 text-neutral-300 hover:text-white hover:bg-transparent"
+              >
+                <Link href="/auth/login">
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Login
+                </Link>
+              </Button>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                required
-                value={formData.confirmPassword}
-                onChange={(e) =>
-                  setFormData({ ...formData, confirmPassword: e.target.value })
-                }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="••••••••"
-                minLength={8}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Resetting Password...' : 'Reset Password'}
-            </button>
-          </form>
-        )}
-
-        {!success && (
-          <div className="mt-6 text-center">
-            <Link href="/auth/login" className="text-sm text-gray-600 hover:underline">
-              Back to Login
-            </Link>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
@@ -287,10 +370,10 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading...</p>
+        <div className="flex min-h-screen bg-black items-center justify-center p-4">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-white mx-auto mb-4" />
+            <p className="text-neutral-400">Loading...</p>
           </div>
         </div>
       }

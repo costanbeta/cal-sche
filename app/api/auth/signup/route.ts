@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { hashPassword } from '@/lib/auth'
+import { hashPassword, generateVerificationToken } from '@/lib/auth'
 import { signupSchema } from '@/lib/validations'
+import { sendEmailVerification } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +41,11 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(validatedData.password)
     
+    // Generate verification token
+    const verificationToken = generateVerificationToken()
+    const verificationTokenExpiry = new Date()
+    verificationTokenExpiry.setHours(verificationTokenExpiry.getHours() + 24)
+    
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -47,7 +53,9 @@ export async function POST(request: NextRequest) {
         name: validatedData.name,
         username: validatedData.username.toLowerCase(),
         password: hashedPassword,
-        timezone: 'UTC', // Will be updated later
+        timezone: 'UTC',
+        verificationToken,
+        verificationTokenExpiry,
       },
       select: {
         id: true,
@@ -59,8 +67,15 @@ export async function POST(request: NextRequest) {
       },
     })
     
+    // Send verification email
+    try {
+      await sendEmailVerification(user.email, user.name, verificationToken)
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError)
+    }
+    
     return NextResponse.json({
-      message: 'User created successfully',
+      message: 'User created successfully. Please check your email to verify your account.',
       user,
     }, { status: 201 })
     

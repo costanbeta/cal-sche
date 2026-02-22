@@ -2,6 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { AlertCircle, Loader2, CheckCircle2, ArrowLeft, Key } from 'lucide-react'
+
+import Logo from '@/components/Logo'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -36,131 +43,151 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-            <svg
-              className="w-8 h-8 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-              />
-            </svg>
+    <div className="flex min-h-screen bg-black">
+      {/* Left Side - Branding with Image Background */}
+      <div className="hidden lg:flex lg:w-[640px] relative bg-neutral-800 overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0"
+            style={{
+              backgroundImage: 'url("/signup-bg.png")',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          >
+            <div className="absolute inset-0 bg-black/20" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Forgot Password?</h1>
-          <p className="text-gray-600 mt-2">
-            No worries, we&apos;ll send you reset instructions
-          </p>
         </div>
 
-        {success ? (
-          <div className="space-y-6">
-            <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg">
-              <div className="flex items-start">
-                <svg
-                  className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <div>
-                  <p className="font-semibold">Check your email</p>
-                  <p className="text-sm mt-1">
-                    If an account exists with <strong>{email}</strong>, you will receive
-                    password reset instructions.
-                  </p>
-                </div>
-              </div>
-            </div>
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-between p-8 w-full">
+          {/* Logo */}
+          <Link href="/">
+            <Logo size="md" showText={true} />
+          </Link>
 
-            <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-lg text-sm">
-              <p className="font-semibold mb-1">📧 Didn&apos;t receive the email?</p>
-              <ul className="list-disc list-inside space-y-1 text-blue-700">
-                <li>Check your spam folder</li>
-                <li>Make sure you entered the correct email</li>
-                <li>The link expires in 1 hour</li>
-              </ul>
-            </div>
+          {/* Testimonial */}
+          <div className="text-white">
+            <p className="text-base leading-relaxed">
+              "This library has saved me countless hours of work and helped me deliver stunning designs to my clients faster than ever before." - Sofia Davis
+            </p>
+          </div>
+        </div>
+      </div>
 
-            <div className="text-center">
-              <button
-                onClick={() => {
-                  setSuccess(false)
-                  setEmail('')
-                }}
-                className="text-blue-600 hover:underline text-sm font-medium"
-              >
-                Try another email address
-              </button>
+      {/* Right Side - Reset Password Form */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-black">
+        <div className="w-full max-w-[400px] space-y-6">
+          {/* Icon */}
+          <div className="flex justify-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/5 rounded-full border border-neutral-700">
+              <Key className="w-8 h-8 text-white" />
             </div>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
-                {error}
+
+          {/* Form Title */}
+          <div className="space-y-2 text-center">
+            <h1 className="text-2xl font-semibold text-white tracking-tight">
+              Forgot Password?
+            </h1>
+            <p className="text-sm text-neutral-400">
+              No worries, we'll send you reset instructions
+            </p>
+          </div>
+
+          {success ? (
+            <div className="space-y-6">
+              {/* Success Message */}
+              <Alert className="bg-green-950/50 border-green-900">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <AlertDescription className="text-green-200">
+                  <p className="font-semibold mb-1">Check your email</p>
+                  <p className="text-sm">
+                    If an account exists with <strong>{email}</strong>, you will receive password reset instructions.
+                  </p>
+                </AlertDescription>
+              </Alert>
+
+              {/* Tips */}
+              <Alert className="bg-blue-950/50 border-blue-900">
+                <AlertDescription className="text-blue-200">
+                  <p className="font-semibold mb-2 text-sm">📧 Didn't receive the email?</p>
+                  <ul className="list-disc list-inside space-y-1 text-xs text-blue-300">
+                    <li>Check your spam folder</li>
+                    <li>Make sure you entered the correct email</li>
+                    <li>The link expires in 1 hour</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              {/* Try Again */}
+              <div className="text-center">
+                <button
+                  onClick={() => {
+                    setSuccess(false)
+                    setEmail('')
+                  }}
+                  className="text-sm text-neutral-400 hover:text-white transition-colors"
+                >
+                  Try another email address
+                </button>
               </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="john@example.com"
-              />
-              <p className="text-xs text-gray-500 mt-2">
-                Enter the email address associated with your account
-              </p>
             </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <Alert variant="destructive" className="bg-red-950/50 border-red-900">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Sending...' : 'Send Reset Link'}
-            </button>
-          </form>
-        )}
+              {/* Email */}
+              <div className="space-y-3">
+                <Label htmlFor="email" className="text-xs text-white">
+                  Email Address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="h-9 bg-white/5 border-neutral-700 text-white placeholder:text-neutral-500 focus-visible:ring-neutral-600"
+                />
+                <p className="text-xs text-neutral-500">
+                  Enter the email address associated with your account
+                </p>
+              </div>
 
-        <div className="mt-6 text-center">
-          <Link
-            href="/auth/login"
-            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
-          >
-            <svg
-              className="w-4 h-4 mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full h-9 bg-white text-black hover:bg-neutral-100 font-semibold"
+              >
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {loading ? 'Sending...' : 'Send Reset Link'}
+              </Button>
+            </form>
+          )}
+
+          {/* Back to Login */}
+          <div className="text-center pt-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              asChild
+              className="text-neutral-400 hover:text-white hover:bg-transparent"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            Back to Login
-          </Link>
+              <Link href="/auth/login">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Login
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </div>
