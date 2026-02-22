@@ -92,7 +92,7 @@ export default function ForgotPasswordPage() {
               Forgot Password?
             </h1>
             <p className="text-sm text-neutral-400">
-              No worries, we'll send you reset instructions
+              No worries, we&apos;ll send you reset instructions
             </p>
           </div>
 
@@ -112,7 +112,7 @@ export default function ForgotPasswordPage() {
               {/* Tips */}
               <Alert className="bg-blue-950/50 border-blue-900">
                 <AlertDescription className="text-blue-200">
-                  <p className="font-semibold mb-2 text-sm">📧 Didn't receive the email?</p>
+                  <p className="font-semibold mb-2 text-sm">📧 Didn&apos;t receive the email?</p>
                   <ul className="list-disc list-inside space-y-1 text-xs text-blue-300">
                     <li>Check your spam folder</li>
                     <li>Make sure you entered the correct email</li>
