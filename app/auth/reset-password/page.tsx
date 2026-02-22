@@ -145,9 +145,9 @@ function ResetPasswordForm() {
             </Link>
 
             <div className="text-white">
-              <p className="text-base leading-relaxed">
-                "This library has saved me countless hours of work and helped me deliver stunning designs to my clients faster than ever before." - Sofia Davis
-              </p>
+            <p className="text-base leading-relaxed">
+              &quot;This library has saved me countless hours of work and helped me deliver stunning designs to my clients faster than ever before.&quot; - Sofia Davis
+            </p>
             </div>
           </div>
         </div>

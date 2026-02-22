@@ -84,7 +84,7 @@ export default function SignupPage() {
           {/* Testimonial */}
           <div className="text-white">
             <p className="text-base leading-relaxed">
-              "This library has saved me countless hours of work and helped me deliver stunning designs to my clients faster than ever before." - Sofia Davis
+              &quot;This library has saved me countless hours of work and helped me deliver stunning designs to my clients faster than ever before.&quot; - Sofia Davis
             </p>
           </div>
         </div>
@@ -98,8 +98,8 @@ export default function SignupPage() {
             <h1 className="text-2xl font-semibold text-white tracking-tight">
               Create an account
             </h1>
-            <p className="text-sm text-neutral-400">
-              Let's get started. Fill in the details below to create your account.
+            <p className="text-xs text-white">
+              Let&apos;s get started. Fill in the details below to create your account.
             </p>
           </div>
 

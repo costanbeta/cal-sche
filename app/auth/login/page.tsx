@@ -80,7 +80,7 @@ export default function LoginPage() {
           {/* Testimonial */}
           <div className="text-white">
             <p className="text-base leading-relaxed">
-              "This library has saved me countless hours of work and helped me deliver stunning designs to my clients faster than ever before." - Sofia Davis
+              &quot;This library has saved me countless hours of work and helped me deliver stunning designs to my clients faster than ever before.&quot; - Sofia Davis
             </p>
           </div>
         </div>
@@ -163,7 +163,7 @@ export default function LoginPage() {
           {/* Don't have account */}
           <div className="flex flex-col items-center gap-1 pt-2">
             <p className="text-xs text-white">
-              Don't have an account?
+              Don&apos;t have an account?
             </p>
             <Button 
               variant="ghost" 
@@ -181,7 +181,7 @@ export default function LoginPage() {
           {/* Forgot Password */}
           <div className="flex flex-col items-center gap-1 pt-2">
             <p className="text-xs text-white">
-              Don't remember password?
+              Don&apos;t remember password?
             </p>
             <Button 
               variant="ghost" 
