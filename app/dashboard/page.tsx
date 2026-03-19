@@ -474,7 +474,7 @@ export default function DashboardPage() {
                       color: 'hsl(var(--foreground))',
                     }}
                     cursor={{ stroke: 'hsl(var(--border))' }}
-                    formatter={(value: number) => [value, 'Bookings']}
+                    formatter={(value) => [value ?? 0, 'Bookings']}
                   />
                   <Line
                     type="monotone"
