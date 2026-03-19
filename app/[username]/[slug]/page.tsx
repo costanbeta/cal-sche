@@ -2,7 +2,16 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
+import Image from 'next/image'
 import { format, addDays, startOfDay, parseISO, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns'
+import { Clock, Calendar, Globe, Video, Phone, Building2, ChevronLeft, ChevronRight, Plus, Check, ExternalLink, ArrowLeft, ChevronDown, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import LoadingSpinner from '@/components/LoadingSpinner'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 interface EventType {
   id: string
@@ -46,9 +55,12 @@ export default function BookingPage() {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [viewMode, setViewMode] = useState<'12h' | '24h'>('12h')
-  const [selectedTimezone, setSelectedTimezone] = useState<string>(
-    typeof window !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC'
-  )
+  const [selectedTimezone, setSelectedTimezone] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone
+    }
+    return 'UTC'
+  })
   const [showTimezoneDropdown, setShowTimezoneDropdown] = useState(false)
   const [formData, setFormData] = useState({
     attendeeName: '',
@@ -56,26 +68,78 @@ export default function BookingPage() {
     attendeeNotes: '',
     additionalGuests: [] as string[],
   })
+  const [showGuestInput, setShowGuestInput] = useState(false)
+  const [guestEmail, setGuestEmail] = useState('')
   const [loading, setLoading] = useState(true)
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [bookingDetails, setBookingDetails] = useState<any>(null)
 
-  // Common timezones grouped by region
+  const timezoneDisplayNames: Record<string, string> = {
+    'Asia/Kolkata': 'India',
+    'Asia/Colombo': 'Sri Lanka',
+    'Asia/Dubai': 'UAE',
+    'Asia/Tokyo': 'Japan',
+    'Asia/Shanghai': 'China',
+    'Asia/Singapore': 'Singapore',
+    'Asia/Hong_Kong': 'Hong Kong',
+    'Asia/Seoul': 'South Korea',
+    'Asia/Bangkok': 'Thailand',
+    'Asia/Jakarta': 'Indonesia',
+    'Asia/Karachi': 'Pakistan',
+    'Asia/Dhaka': 'Bangladesh',
+    'Asia/Kathmandu': 'Nepal',
+    'Europe/London': 'United Kingdom',
+    'Europe/Paris': 'France',
+    'Europe/Berlin': 'Germany',
+    'Europe/Moscow': 'Russia',
+    'Europe/Istanbul': 'Turkey',
+    'America/New_York': 'United States (East)',
+    'America/Chicago': 'United States (Central)',
+    'America/Denver': 'United States (Mountain)',
+    'America/Los_Angeles': 'United States (West)',
+    'America/Toronto': 'Canada (East)',
+    'America/Vancouver': 'Canada (West)',
+    'America/Sao_Paulo': 'Brazil',
+    'America/Mexico_City': 'Mexico',
+    'Australia/Sydney': 'Australia (East)',
+    'Australia/Perth': 'Australia (West)',
+    'Pacific/Auckland': 'New Zealand',
+    'Africa/Cairo': 'Egypt',
+    'Africa/Lagos': 'Nigeria',
+    'Africa/Johannesburg': 'South Africa',
+  }
+
+  const getTimezoneOffset = (tz: string) => {
+    try {
+      const now = new Date()
+      const formatter = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' })
+      const parts = formatter.formatToParts(now)
+      const offsetPart = parts.find(p => p.type === 'timeZoneName')
+      return offsetPart?.value?.replace('GMT', 'GMT ') || ''
+    } catch {
+      return ''
+    }
+  }
+
+  const getTimezoneDisplayName = (tz: string) => {
+    return timezoneDisplayNames[tz] || tz.split('/').pop()?.replace(/_/g, ' ') || tz
+  }
+
   const commonTimezones = [
-    { label: 'Asia/Kolkata (IST GMT +5:30)', value: 'Asia/Kolkata' },
-    { label: 'Asia/Dubai (GST GMT +4:00)', value: 'Asia/Dubai' },
-    { label: 'Europe/London (GMT +0:00)', value: 'Europe/London' },
-    { label: 'Europe/Paris (CET GMT +1:00)', value: 'Europe/Paris' },
-    { label: 'America/New_York (EST GMT -5:00)', value: 'America/New_York' },
-    { label: 'America/Chicago (CST GMT -6:00)', value: 'America/Chicago' },
-    { label: 'America/Los_Angeles (PST GMT -8:00)', value: 'America/Los_Angeles' },
-    { label: 'Asia/Tokyo (JST GMT +9:00)', value: 'Asia/Tokyo' },
-    { label: 'Asia/Shanghai (CST GMT +8:00)', value: 'Asia/Shanghai' },
-    { label: 'Asia/Singapore (SGT GMT +8:00)', value: 'Asia/Singapore' },
-    { label: 'Australia/Sydney (AEDT GMT +11:00)', value: 'Australia/Sydney' },
-    { label: 'Pacific/Auckland (NZDT GMT +13:00)', value: 'Pacific/Auckland' },
+    { label: 'India', offset: 'IST GMT +5:30', value: 'Asia/Kolkata' },
+    { label: 'UAE', offset: 'GST GMT +4:00', value: 'Asia/Dubai' },
+    { label: 'United Kingdom', offset: 'GMT +0:00', value: 'Europe/London' },
+    { label: 'France', offset: 'CET GMT +1:00', value: 'Europe/Paris' },
+    { label: 'United States (East)', offset: 'EST GMT -5:00', value: 'America/New_York' },
+    { label: 'United States (Central)', offset: 'CST GMT -6:00', value: 'America/Chicago' },
+    { label: 'United States (West)', offset: 'PST GMT -8:00', value: 'America/Los_Angeles' },
+    { label: 'Japan', offset: 'JST GMT +9:00', value: 'Asia/Tokyo' },
+    { label: 'China', offset: 'CST GMT +8:00', value: 'Asia/Shanghai' },
+    { label: 'Singapore', offset: 'SGT GMT +8:00', value: 'Asia/Singapore' },
+    { label: 'Australia (East)', offset: 'AEDT GMT +11:00', value: 'Australia/Sydney' },
+    { label: 'New Zealand', offset: 'NZDT GMT +13:00', value: 'Pacific/Auckland' },
   ]
 
   const fetchEventType = useCallback(async () => {
@@ -133,7 +197,6 @@ export default function BookingPage() {
     }
   }, [eventType, fetchSlots])
 
-  // Close timezone dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showTimezoneDropdown) {
@@ -186,6 +249,7 @@ export default function BookingPage() {
       }
 
       setBookingDetails({
+        id: data.booking?.id || data.id,
         title: `${eventType.name} between ${eventType.user.name} and ${formData.attendeeName}`,
         when: selectedSlot.start,
         attendeeName: formData.attendeeName,
@@ -206,167 +270,140 @@ export default function BookingPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-lg">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner size="lg" />
       </div>
     )
   }
 
   if (error && !eventType) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md text-center">
-          <div className="text-4xl mb-4">❌</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Not Found</h1>
-          <p className="text-gray-600">{error}</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md text-center">
+          <CardContent className="p-8">
+            <div className="text-4xl mb-4">❌</div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Not Found</h1>
+            <p className="text-muted-foreground">{error}</p>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   if (success && bookingDetails) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
-        <div className="bg-[#1a1a1a] rounded-2xl shadow-2xl max-w-2xl w-full p-8 border border-gray-800">
-          {/* Success Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 rounded-full bg-green-600 flex items-center justify-center">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-          </div>
-
-          <h1 className="text-3xl font-bold text-white text-center mb-2">
-            This meeting is scheduled
-          </h1>
-          <p className="text-gray-400 text-center mb-8">
-            We sent an email with a calendar invitation with the details to everyone.
-          </p>
-
-          {/* Meeting Details */}
-          <div className="space-y-4 mb-8">
-            <div className="grid grid-cols-[100px_1fr] gap-4 py-3 border-b border-gray-800">
-              <span className="text-gray-400">What</span>
-              <span className="text-white font-medium">{bookingDetails.title}</span>
-            </div>
-
-            <div className="grid grid-cols-[100px_1fr] gap-4 py-3 border-b border-gray-800">
-              <span className="text-gray-400">When</span>
-              <div className="text-white">
-                <div className="font-medium">
-                  {format(parseISO(bookingDetails.when), 'EEEE, MMMM d, yyyy')}
-                </div>
-                <div className="text-gray-400 text-sm">
-                  {format(parseISO(bookingDetails.when), 'h:mm a')} - {format(new Date(new Date(bookingDetails.when).getTime() + eventType!.duration * 60000), 'h:mm a')} ({selectedTimezone})
-                </div>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-2xl w-full border-border">
+          <CardContent className="p-8">
+            {/* Success Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center">
+                <Check className="w-10 h-10 text-foreground" strokeWidth={3} />
               </div>
             </div>
 
-            <div className="grid grid-cols-[100px_1fr] gap-4 py-3 border-b border-gray-800">
-              <span className="text-gray-400">Who</span>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                    {bookingDetails.hostName.charAt(0)}
+            <h1 className="text-3xl font-bold text-foreground text-center mb-2">
+              This meeting is scheduled
+            </h1>
+            <p className="text-muted-foreground text-center mb-8">
+              We sent an email with a calendar invitation with the details to everyone.
+            </p>
+
+            {/* Meeting Details */}
+            <div className="space-y-4 mb-8">
+              <div className="grid grid-cols-[100px_1fr] gap-4 py-3 border-b border-border">
+                <span className="text-muted-foreground">What</span>
+                <span className="text-foreground font-medium">{bookingDetails.title}</span>
+              </div>
+
+              <div className="grid grid-cols-[100px_1fr] gap-4 py-3 border-b border-border">
+                <span className="text-muted-foreground">When</span>
+                <div className="text-foreground">
+                  <div className="font-medium">
+                    {format(parseISO(bookingDetails.when), 'EEEE, MMMM d, yyyy')}
                   </div>
-                  <div>
-                    <div className="text-white flex items-center gap-2">
-                      {bookingDetails.hostName}
-                      <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded">Host</span>
+                  <div className="text-muted-foreground text-sm">
+                    {format(parseISO(bookingDetails.when), 'h:mm a')} - {format(new Date(new Date(bookingDetails.when).getTime() + eventType!.duration * 60000), 'h:mm a')} ({selectedTimezone})
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-[100px_1fr] gap-4 py-3 border-b border-border">
+                <span className="text-muted-foreground">Who</span>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
+                      {bookingDetails.hostName.charAt(0)}
                     </div>
-                    <div className="text-gray-400 text-sm">{bookingDetails.hostEmail}@gmail.com</div>
+                    <div>
+                      <div className="text-foreground flex items-center gap-2">
+                        {bookingDetails.hostName}
+                        <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded">Host</span>
+                      </div>
+                      <div className="text-muted-foreground text-sm">{bookingDetails.hostEmail}@gmail.com</div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center text-white text-xs font-bold">
-                    {bookingDetails.attendeeName.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="text-white">{bookingDetails.attendeeName}</div>
-                    <div className="text-gray-400 text-sm">{bookingDetails.attendeeEmail}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-foreground text-xs font-bold">
+                      {bookingDetails.attendeeName.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="text-foreground">{bookingDetails.attendeeName}</div>
+                      <div className="text-muted-foreground text-sm">{bookingDetails.attendeeEmail}</div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="grid grid-cols-[100px_1fr] gap-4 py-3 border-b border-gray-800">
-              <span className="text-gray-400">Where</span>
-              {bookingDetails.meetingLink ? (
-                <a 
-                  href={bookingDetails.meetingLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline flex items-center gap-1"
-                >
-                  {bookingDetails.location === 'zoom' && 'Video Call'}
-                  {bookingDetails.location === 'google_meet' && 'Google Meet'}
-                  {bookingDetails.location === 'phone' && 'Phone Call'}
-                  {bookingDetails.location === 'in_person' && 'In Person Meeting'}
-                  {bookingDetails.location === 'custom' && 'Video Call'}
-                  {!bookingDetails.location && 'Video Call'}
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              ) : (
-                <span className="text-white">
-                  {bookingDetails.location === 'zoom' && 'Video Call'}
-                  {bookingDetails.location === 'google_meet' && 'Google Meet'}
-                  {bookingDetails.location === 'phone' && 'Phone Call'}
-                  {bookingDetails.location === 'in_person' && 'In Person Meeting'}
-                  {bookingDetails.location === 'custom' && 'Video Call'}
-                  {!bookingDetails.location && 'Video Call'}
-                </span>
+              <div className="grid grid-cols-[100px_1fr] gap-4 py-3 border-b border-border">
+                <span className="text-muted-foreground">Where</span>
+                {bookingDetails.meetingLink ? (
+                  <a 
+                    href={bookingDetails.meetingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline flex items-center gap-1"
+                  >
+                    {bookingDetails.location === 'zoom' && 'Video Call'}
+                    {bookingDetails.location === 'google_meet' && 'Google Meet'}
+                    {bookingDetails.location === 'phone' && 'Phone Call'}
+                    {bookingDetails.location === 'in_person' && 'In Person Meeting'}
+                    {bookingDetails.location === 'custom' && 'Video Call'}
+                    {!bookingDetails.location && 'Video Call'}
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                ) : (
+                  <span className="text-foreground">
+                    {bookingDetails.location === 'zoom' && 'Video Call'}
+                    {bookingDetails.location === 'google_meet' && 'Google Meet'}
+                    {bookingDetails.location === 'phone' && 'Phone Call'}
+                    {bookingDetails.location === 'in_person' && 'In Person Meeting'}
+                    {bookingDetails.location === 'custom' && 'Video Call'}
+                    {!bookingDetails.location && 'Video Call'}
+                  </span>
+                )}
+              </div>
+
+              {bookingDetails.notes && (
+                <div className="grid grid-cols-[100px_1fr] gap-4 py-3">
+                  <span className="text-muted-foreground">Additional notes</span>
+                  <span className="text-foreground">{bookingDetails.notes}</span>
+                </div>
               )}
             </div>
 
-            {bookingDetails.notes && (
-              <div className="grid grid-cols-[100px_1fr] gap-4 py-3">
-                <span className="text-gray-400">Additional notes</span>
-                <span className="text-white">{bookingDetails.notes}</span>
+            {/* Action Buttons */}
+            <div className="flex items-center justify-between pt-6 border-t border-border">
+              <div className="text-sm text-muted-foreground">
+                Need to make a change?{' '}
+                <a href={`/booking/${bookingDetails.id}/reschedule`} className="text-primary hover:underline">Reschedule</a>
+                {' '}or{' '}
+                <a href={`/booking/${bookingDetails.id}/cancel`} className="text-primary hover:underline">Cancel</a>
               </div>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-6 border-t border-gray-800">
-            <div className="text-sm text-gray-400">
-              Need to make a change?{' '}
-              <button className="text-blue-500 hover:underline">Reschedule</button>
-              {' '}or{' '}
-              <button className="text-blue-500 hover:underline">Cancel</button>
             </div>
-          </div>
 
-          {/* Calendar Integration */}
-          <div className="flex items-center justify-center gap-4 mt-6 pt-6 border-t border-gray-800">
-            <span className="text-gray-400 text-sm">Add to calendar</span>
-            <div className="flex gap-2">
-              <button className="w-10 h-10 rounded-lg bg-[#242424] hover:bg-[#2a2a2a] flex items-center justify-center transition">
-                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M20.945 11C20.484 6.054 16.41 2 11.5 2S2.516 6.054 2.055 11H0v2h2.055C2.516 17.946 6.59 22 11.5 22s8.984-4.054 9.445-9h2.055v-2h-2.055zM11.5 20c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/>
-                  <path d="M12 7h-1v6h6v-1h-5z"/>
-                </svg>
-              </button>
-              <button className="w-10 h-10 rounded-lg bg-[#242424] hover:bg-[#2a2a2a] flex items-center justify-center transition">
-                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10z"/>
-                </svg>
-              </button>
-              <button className="w-10 h-10 rounded-lg bg-[#242424] hover:bg-[#2a2a2a] flex items-center justify-center transition">
-                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 4h-3V2h-2v2h-4V2H8v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/>
-                </svg>
-              </button>
-              <button className="w-10 h-10 rounded-lg bg-[#242424] hover:bg-[#2a2a2a] flex items-center justify-center transition">
-                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -381,56 +418,54 @@ export default function BookingPage() {
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-background">
       <div className="flex flex-col lg:flex-row min-h-screen">
         {!showForm ? (
           <>
             {/* Left Side - Profile & Event Info */}
-            <div className="lg:w-[400px] bg-[#0a0a0a] p-8 border-r border-gray-800">
+            <div className="lg:w-[400px] bg-background p-8 border-r border-border">
               {/* Profile Picture */}
               <div className="flex items-center gap-4 mb-8">
                 {branding?.brandLogoUrl ? (
-                  <img 
+                  <Image 
                     src={branding.brandLogoUrl} 
-                    alt={eventType?.user.name}
-                    className="w-12 h-12 rounded-full object-cover"
+                    alt={eventType?.user.name || ''}
+                    width={48}
+                    height={48}
+                    className="rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white text-lg font-bold">
+                  <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-foreground text-lg font-bold">
                     {eventType?.user.name.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div>
-                  <h2 className="text-white font-semibold">{eventType?.user.name}</h2>
+                  <h2 className="text-foreground font-semibold">{eventType?.user.name}</h2>
                 </div>
               </div>
 
               {/* Event Details */}
-              <h1 className="text-2xl font-bold text-white mb-4">
+              <h1 className="text-2xl font-bold text-foreground mb-4">
                 {eventType?.name}
               </h1>
 
-              <div className="space-y-3 text-gray-400">
+              <div className="space-y-3 text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <Clock className="w-5 h-5" />
                   <span>{eventType?.duration}m</span>
                 </div>
 
                 {eventType?.location && (
                   <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      {(eventType.location === 'zoom' || eventType.location === 'google_meet' || eventType.location === 'custom') && (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      )}
-                      {eventType.location === 'phone' && (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      )}
-                      {eventType.location === 'in_person' && (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      )}
-                    </svg>
+                    {(eventType.location === 'zoom' || eventType.location === 'google_meet' || eventType.location === 'custom') && (
+                      <Video className="w-5 h-5" />
+                    )}
+                    {eventType.location === 'phone' && (
+                      <Phone className="w-5 h-5" />
+                    )}
+                    {eventType.location === 'in_person' && (
+                      <Building2 className="w-5 h-5" />
+                    )}
                     <span>
                       {eventType.location === 'zoom' && 'Video Call'}
                       {eventType.location === 'google_meet' && 'Google Meet'}
@@ -445,40 +480,43 @@ export default function BookingPage() {
                 <div className="relative timezone-selector">
                   <button
                     onClick={() => setShowTimezoneDropdown(!showTimezoneDropdown)}
-                    className="flex items-center gap-2 w-full hover:text-gray-300 transition"
+                    className="flex items-center gap-2 w-full hover:text-muted-foreground/80 transition"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="flex-1 text-left truncate">{selectedTimezone.split('/')[1]?.replace('_', ' ')}</span>
-                    <svg className={`w-4 h-4 transition-transform ${showTimezoneDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <Globe className="w-5 h-5" />
+                    <span className="flex-1 text-left truncate">{getTimezoneDisplayName(selectedTimezone)}</span>
+                    <ChevronDown className={cn('w-4 h-4 transition-transform', showTimezoneDropdown && 'rotate-180')} />
                   </button>
 
                   {/* Timezone Dropdown */}
                   {showTimezoneDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-gray-800 rounded-lg shadow-xl max-h-80 overflow-y-auto z-50 scrollbar-thin">
-                      {commonTimezones.map((tz) => (
-                        <button
-                          key={tz.value}
-                          onClick={() => {
-                            setSelectedTimezone(tz.value)
-                            setShowTimezoneDropdown(false)
-                          }}
-                          className={`
-                            w-full px-4 py-3 text-left text-sm hover:bg-[#242424] transition flex items-center justify-between
-                            ${selectedTimezone === tz.value ? 'bg-[#242424] text-white' : 'text-gray-400'}
-                          `}
-                        >
-                          <span>{tz.label}</span>
-                          {selectedTimezone === tz.value && (
-                            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                      ))}
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-xl max-h-80 overflow-y-auto z-50 scrollbar-thin">
+                      {(() => {
+                        const userTzInList = commonTimezones.some(tz => tz.value === selectedTimezone)
+                        const allTimezones = userTzInList
+                          ? commonTimezones
+                          : [
+                              { label: getTimezoneDisplayName(selectedTimezone), offset: getTimezoneOffset(selectedTimezone), value: selectedTimezone },
+                              ...commonTimezones,
+                            ]
+                        return allTimezones.map((tz) => (
+                          <button
+                            key={tz.value}
+                            onClick={() => {
+                              setSelectedTimezone(tz.value)
+                              setShowTimezoneDropdown(false)
+                            }}
+                            className={cn(
+                              'w-full px-4 py-3 text-left text-sm hover:bg-accent transition flex items-center justify-between',
+                              selectedTimezone === tz.value ? 'bg-accent text-foreground' : 'text-muted-foreground'
+                            )}
+                          >
+                            <span>{tz.label} ({tz.offset})</span>
+                            {selectedTimezone === tz.value && (
+                              <Check className="w-5 h-5 text-primary" />
+                            )}
+                          </button>
+                        ))
+                      })()}
                     </div>
                   )}
                 </div>
@@ -486,35 +524,31 @@ export default function BookingPage() {
             </div>
 
             {/* Right Side - Calendar & Time Slots */}
-            <div className="flex-1 bg-[#0a0a0a] p-8">
+            <div className="flex-1 bg-background p-8">
               <div className="max-w-4xl">
                 {/* Header - Select Date & Time */}
-                <h2 className="text-xl font-semibold text-white mb-6">Select a Date & Time</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-6">Select a Date & Time</h2>
 
                 <div className="grid lg:grid-cols-2 gap-8">
                   {/* Calendar */}
                   <div>
                     {/* Month Navigation */}
                     <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-lg font-semibold text-white">
+                      <h3 className="text-lg font-semibold text-foreground">
                         {format(currentMonth, 'MMMM yyyy')}
                       </h3>
                       <div className="flex gap-2">
                         <button
                           onClick={goToPreviousMonth}
-                          className="w-8 h-8 rounded-lg bg-[#1a1a1a] hover:bg-[#242424] flex items-center justify-center transition text-gray-400"
+                          className="w-8 h-8 rounded-lg bg-card hover:bg-accent flex items-center justify-center transition text-muted-foreground"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                          </svg>
+                          <ChevronLeft className="w-5 h-5" />
                         </button>
                         <button
                           onClick={goToNextMonth}
-                          className="w-8 h-8 rounded-lg bg-[#1a1a1a] hover:bg-[#242424] flex items-center justify-center transition text-gray-400"
+                          className="w-8 h-8 rounded-lg bg-card hover:bg-accent flex items-center justify-center transition text-muted-foreground"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
+                          <ChevronRight className="w-5 h-5" />
                         </button>
                       </div>
                     </div>
@@ -522,7 +556,7 @@ export default function BookingPage() {
                     {/* Day Headers */}
                     <div className="grid grid-cols-7 gap-1 mb-2">
                       {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
-                        <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
+                        <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
                           {day}
                         </div>
                       ))}
@@ -551,19 +585,18 @@ export default function BookingPage() {
                               }
                             }}
                             disabled={isPast || !isInMonth}
-                            className={`
-                              aspect-square rounded-lg flex items-center justify-center text-sm font-medium transition
-                              ${isSelected 
-                                ? 'bg-white text-black' 
+                            className={cn(
+                              'aspect-square rounded-lg flex items-center justify-center text-sm font-medium transition',
+                              isSelected
+                                ? 'bg-white text-black'
                                 : isPast || !isInMonth
-                                  ? 'text-gray-600 cursor-not-allowed'
-                                  : 'text-gray-300 hover:bg-[#1a1a1a]'
-                              }
-                              ${isToday && !isSelected ? 'border border-gray-600' : ''}
-                            `}
+                                  ? 'text-muted-foreground/50 cursor-not-allowed'
+                                  : 'text-muted-foreground hover:bg-card',
+                              isToday && !isSelected && 'border border-border'
+                            )}
                           >
                             {format(day, 'd')}
-                            {isToday && !isSelected && <span className="absolute w-1 h-1 bg-blue-500 rounded-full mt-8"></span>}
+                            {isToday && !isSelected && <span className="absolute w-1 h-1 bg-primary rounded-full mt-8"></span>}
                           </button>
                         )
                       })}
@@ -573,23 +606,25 @@ export default function BookingPage() {
                   {/* Time Slots */}
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <div className="text-white font-medium">
-                        <span className="text-gray-400">Mon</span> {format(selectedDate, 'd')}
+                      <div className="text-foreground font-medium">
+                        <span className="text-muted-foreground">Mon</span> {format(selectedDate, 'd')}
                       </div>
-                      <div className="flex gap-1 bg-[#1a1a1a] rounded-lg p-1">
+                      <div className="flex gap-1 bg-card rounded-lg p-1">
                         <button
                           onClick={() => setViewMode('12h')}
-                          className={`px-3 py-1 rounded text-sm transition ${
-                            viewMode === '12h' ? 'bg-[#242424] text-white' : 'text-gray-400'
-                          }`}
+                          className={cn(
+                            'px-3 py-1 rounded text-sm transition',
+                            viewMode === '12h' ? 'bg-accent text-foreground' : 'text-muted-foreground'
+                          )}
                         >
                           12h
                         </button>
                         <button
                           onClick={() => setViewMode('24h')}
-                          className={`px-3 py-1 rounded text-sm transition ${
-                            viewMode === '24h' ? 'bg-[#242424] text-white' : 'text-gray-400'
-                          }`}
+                          className={cn(
+                            'px-3 py-1 rounded text-sm transition',
+                            viewMode === '24h' ? 'bg-accent text-foreground' : 'text-muted-foreground'
+                          )}
                         >
                           24h
                         </button>
@@ -597,12 +632,12 @@ export default function BookingPage() {
                     </div>
 
                     {loadingSlots ? (
-                      <div className="text-center py-12 text-gray-500">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-2"></div>
+                      <div className="text-center py-12 text-muted-foreground">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-border mx-auto mb-2"></div>
                         Loading slots...
                       </div>
                     ) : slots.length === 0 ? (
-                      <div className="text-center py-12 text-gray-500">
+                      <div className="text-center py-12 text-muted-foreground">
                         No available times
                       </div>
                     ) : (
@@ -612,13 +647,12 @@ export default function BookingPage() {
                             key={index}
                             onClick={() => handleSlotSelect(slot)}
                             disabled={!slot.available}
-                            className={`
-                              w-full px-4 py-3 rounded-lg border transition text-left
-                              ${slot.available
-                                ? 'border-gray-700 hover:border-gray-500 text-white hover:bg-[#1a1a1a]'
-                                : 'border-gray-800 text-gray-600 cursor-not-allowed'
-                              }
-                            `}
+                            className={cn(
+                              'w-full px-4 py-3 rounded-lg border transition text-left',
+                              slot.available
+                                ? 'border-border hover:border-border/80 text-foreground hover:bg-card'
+                                : 'border-border text-muted-foreground/50 cursor-not-allowed'
+                            )}
                           >
                             {viewMode === '12h' 
                               ? format(parseISO(slot.start), 'h:mm a')
@@ -635,67 +669,63 @@ export default function BookingPage() {
           </>
         ) : (
           /* Booking Form */
-          <div className="flex-1 bg-[#0a0a0a]">
+          <div className="flex-1 bg-background">
             <div className="grid lg:grid-cols-2 min-h-screen">
               {/* Left - Meeting Summary */}
-              <div className="bg-[#0a0a0a] p-8 border-r border-gray-800">
+              <div className="bg-background p-8 border-r border-border">
                 <div className="sticky top-8">
                   {/* Profile */}
                   <div className="flex items-center gap-4 mb-8">
                     {branding?.brandLogoUrl ? (
-                      <img 
+                      <Image 
                         src={branding.brandLogoUrl} 
-                        alt={eventType?.user.name}
-                        className="w-12 h-12 rounded-full object-cover"
+                        alt={eventType?.user.name || ''}
+                        width={48}
+                        height={48}
+                        className="rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-white text-lg font-bold">
+                      <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-foreground text-lg font-bold">
                         {eventType?.user.name.charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div>
-                      <h3 className="text-white font-semibold">{eventType?.user.name}</h3>
+                      <h3 className="text-foreground font-semibold">{eventType?.user.name}</h3>
                     </div>
                   </div>
 
-                  <h2 className="text-2xl font-bold text-white mb-6">{eventType?.name}</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-6">{eventType?.name}</h2>
 
-                  <div className="space-y-4 text-gray-400">
-                    <div className="flex items-center gap-3 pb-4 border-b border-gray-800">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <div className="text-white">
+                  <div className="space-y-4 text-muted-foreground">
+                    <div className="flex items-center gap-3 pb-4 border-b border-border">
+                      <Calendar className="w-5 h-5" />
+                      <div className="text-foreground">
                         <div className="font-medium">
                           {selectedSlot && format(parseISO(selectedSlot.start), 'EEEE, MMMM d, yyyy')}
                         </div>
-                <div className="text-sm text-gray-400">
-                  {selectedSlot && format(parseISO(selectedSlot.start), 'h:mm a')} - {selectedSlot && format(new Date(new Date(selectedSlot.start).getTime() + (eventType?.duration || 30) * 60000), 'h:mm a')} ({selectedTimezone})
-                </div>
+                        <div className="text-sm text-muted-foreground">
+                          {selectedSlot && format(parseISO(selectedSlot.start), 'h:mm a')} - {selectedSlot && format(new Date(new Date(selectedSlot.start).getTime() + (eventType?.duration || 30) * 60000), 'h:mm a')} ({selectedTimezone})
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 pb-4 border-b border-gray-800">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="text-white">{eventType?.duration}m</span>
+                    <div className="flex items-center gap-3 pb-4 border-b border-border">
+                      <Clock className="w-5 h-5" />
+                      <span className="text-foreground">{eventType?.duration}m</span>
                     </div>
 
                     {eventType?.location && (
-                      <div className="flex items-center gap-3 pb-4 border-b border-gray-800">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          {(eventType.location === 'zoom' || eventType.location === 'google_meet' || eventType.location === 'custom') && (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          )}
-                          {eventType.location === 'phone' && (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                          )}
-                          {eventType.location === 'in_person' && (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                          )}
-                        </svg>
-                        <span className="text-white">
+                      <div className="flex items-center gap-3 pb-4 border-b border-border">
+                        {(eventType.location === 'zoom' || eventType.location === 'google_meet' || eventType.location === 'custom') && (
+                          <Video className="w-5 h-5" />
+                        )}
+                        {eventType.location === 'phone' && (
+                          <Phone className="w-5 h-5" />
+                        )}
+                        {eventType.location === 'in_person' && (
+                          <Building2 className="w-5 h-5" />
+                        )}
+                        <span className="text-foreground">
                           {eventType.location === 'zoom' && 'Video Call'}
                           {eventType.location === 'google_meet' && 'Google Meet'}
                           {eventType.location === 'phone' && 'Phone'}
@@ -706,110 +736,196 @@ export default function BookingPage() {
                     )}
 
                     <div className="flex items-center gap-3">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="text-white">{selectedTimezone}</span>
+                      <Globe className="w-5 h-5" />
+                      <span className="text-foreground">{selectedTimezone}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Right - Form */}
-              <div className="bg-[#0a0a0a] p-8">
-                <button
+              <div className="bg-background p-8">
+                <Button
+                  variant="ghost"
                   onClick={handleBack}
-                  className="text-gray-400 hover:text-white mb-6 flex items-center gap-2"
+                  className="text-muted-foreground hover:text-foreground mb-6 flex items-center gap-2 px-0"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
+                  <ArrowLeft className="w-5 h-5" />
                   Back
-                </button>
+                </Button>
 
-                <h2 className="text-2xl font-bold text-white mb-6">Enter Details</h2>
+                <h2 className="text-2xl font-bold text-foreground mb-6">Enter Details</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {error && (
-                    <div className="bg-red-900/20 border border-red-800 text-red-400 p-4 rounded-lg text-sm">
+                    <div className="bg-destructive/10 border border-destructive/50 text-destructive p-4 rounded-lg text-sm">
                       {error}
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Your name <span className="text-red-500">*</span>
-                    </label>
-                    <input
+                    <Label className="block text-sm font-medium text-muted-foreground mb-2">
+                      Your name <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
                       type="text"
                       required
                       value={formData.attendeeName}
                       onChange={(e) => setFormData({ ...formData, attendeeName: e.target.value })}
-                      className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 transition"
+                      className="w-full px-4 py-3 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-border/80 transition"
                       placeholder="John Doe"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Email address <span className="text-red-500">*</span>
-                    </label>
-                    <input
+                    <Label className="block text-sm font-medium text-muted-foreground mb-2">
+                      Email address <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
                       type="email"
                       required
                       value={formData.attendeeEmail}
                       onChange={(e) => setFormData({ ...formData, attendeeEmail: e.target.value })}
-                      className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 transition"
+                      className="w-full px-4 py-3 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-border/80 transition"
                       placeholder="you@example.com"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <Label className="block text-sm font-medium text-muted-foreground mb-2">
                       Additional notes
-                    </label>
-                    <textarea
+                    </Label>
+                    <Textarea
                       value={formData.attendeeNotes}
                       onChange={(e) => setFormData({ ...formData, attendeeNotes: e.target.value })}
                       rows={4}
-                      className="w-full px-4 py-3 bg-[#1a1a1a] border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 transition resize-none"
+                      className="w-full px-4 py-3 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-border/80 transition resize-none"
                       placeholder="Please share anything that will help prepare for our meeting."
                     />
                   </div>
 
-                  <button
-                    type="button"
-                    className="text-blue-500 hover:text-blue-400 text-sm flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add guests
-                  </button>
+                  {formData.additionalGuests.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="block text-sm font-medium text-muted-foreground">
+                        Guests
+                      </Label>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.additionalGuests.map((guest, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1.5 bg-secondary text-foreground text-sm px-3 py-1.5 rounded-full"
+                          >
+                            {guest}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFormData(prev => ({
+                                  ...prev,
+                                  additionalGuests: prev.additionalGuests.filter((_, idx) => idx !== i),
+                                }))
+                              }
+                              className="text-muted-foreground hover:text-foreground transition"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                  <div className="pt-6 border-t border-gray-800">
-                    <p className="text-sm text-gray-400 mb-4">
+                  {showGuestInput ? (
+                    <div className="space-y-2">
+                      <Label className="block text-sm font-medium text-muted-foreground">
+                        Guest email
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="email"
+                          value={guestEmail}
+                          onChange={(e) => setGuestEmail(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              const email = guestEmail.trim()
+                              if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                                setFormData(prev => {
+                                  if (prev.additionalGuests.includes(email)) return prev
+                                  return { ...prev, additionalGuests: [...prev.additionalGuests, email] }
+                                })
+                                setGuestEmail('')
+                              }
+                            }
+                          }}
+                          className="flex-1 bg-card border-border text-foreground placeholder:text-muted-foreground"
+                          placeholder="guest@example.com"
+                          autoFocus
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            const email = guestEmail.trim()
+                            if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                              setFormData(prev => {
+                                if (prev.additionalGuests.includes(email)) return prev
+                                return { ...prev, additionalGuests: [...prev.additionalGuests, email] }
+                              })
+                              setGuestEmail('')
+                            }
+                          }}
+                          className="bg-white text-black hover:bg-neutral-200"
+                        >
+                          Add
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setShowGuestInput(false)
+                            setGuestEmail('')
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowGuestInput(true)}
+                      className="text-primary hover:text-primary/80 text-sm flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add guests
+                    </button>
+                  )}
+
+                  <div className="pt-6 border-t border-border">
+                    <p className="text-sm text-muted-foreground mb-4">
                       By proceeding, you agree to our{' '}
-                      <a href="#" className="text-blue-500 hover:underline">Terms</a>
+                      <a href="#" className="text-primary hover:underline">Terms</a>
                       {' '}and{' '}
-                      <a href="#" className="text-blue-500 hover:underline">Privacy Policy</a>.
+                      <a href="#" className="text-primary hover:underline">Privacy Policy</a>.
                     </p>
 
                     <div className="flex gap-3">
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
                         onClick={handleBack}
-                        className="flex-1 px-6 py-3 bg-[#1a1a1a] border border-gray-800 text-white rounded-lg font-medium hover:bg-[#242424] transition"
+                        className="flex-1 px-6 py-3 bg-card border-border text-foreground hover:bg-accent transition"
                       >
                         Back
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="submit"
                         disabled={loading}
-                        className="flex-1 px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 px-6 py-3 bg-white text-black hover:bg-neutral-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {loading ? 'Booking...' : 'Confirm'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </form>

@@ -3,6 +3,15 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowLeft, ChevronRight, Video, Loader2, Check, ExternalLink, Link2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
+import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface EventType {
   id: string
@@ -14,6 +23,11 @@ interface EventType {
   isActive: boolean
   location?: string
   meetingLink?: string
+}
+
+interface IntegrationStatus {
+  zoom: { connected: boolean; email: string | null }
+  google_meet: { connected: boolean }
 }
 
 export default function EditEventTypePage() {
@@ -34,6 +48,20 @@ export default function EditEventTypePage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
+  const [generatingLink, setGeneratingLink] = useState(false)
+  const [integrations, setIntegrations] = useState<IntegrationStatus | null>(null)
+
+  const fetchIntegrationStatus = async () => {
+    try {
+      const res = await fetch('/api/integrations/status')
+      if (res.ok) {
+        const data = await res.json()
+        setIntegrations(data)
+      }
+    } catch {
+      // Silently fail
+    }
+  }
 
   const fetchEventType = useCallback(async () => {
     try {
@@ -73,6 +101,7 @@ export default function EditEventTypePage() {
 
   useEffect(() => {
     fetchEventType()
+    fetchIntegrationStatus()
   }, [fetchEventType])
 
   const handleNameChange = (name: string) => {
@@ -84,6 +113,52 @@ export default function EditEventTypePage() {
       .trim()
     
     setFormData({ ...formData, name, slug })
+  }
+
+  const showMeetingLink =
+    formData.location === 'zoom' ||
+    formData.location === 'google_meet' ||
+    formData.location === 'custom'
+
+  const generateMeetingLink = async () => {
+    setGeneratingLink(true)
+    try {
+      let endpoint = ''
+      let body = {}
+
+      if (formData.location === 'zoom') {
+        endpoint = '/api/integrations/zoom/create-meeting'
+        body = {
+          topic: formData.name || 'Meeting',
+          duration: formData.duration || 30,
+        }
+      } else if (formData.location === 'google_meet') {
+        endpoint = '/api/integrations/google-meet/create-meeting'
+        body = {
+          summary: formData.name || 'Meeting',
+          duration: formData.duration || 30,
+        }
+      }
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to generate link')
+      }
+
+      setFormData({ ...formData, meetingLink: data.meetingLink })
+      toast.success('Meeting link generated!')
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to generate meeting link')
+    } finally {
+      setGeneratingLink(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,7 +179,8 @@ export default function EditEventTypePage() {
         throw new Error(data.error || 'Failed to update event type')
       }
 
-      router.push('/dashboard')
+      toast.success('Event updated!')
+      router.push('/dashboard/event-types')
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -112,21 +188,24 @@ export default function EditEventTypePage() {
     }
   }
 
+  const isZoomConnected = integrations?.zoom?.connected ?? false
+  const isGoogleConnected = integrations?.google_meet?.connected ?? false
+
   if (fetching) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading event type...</div>
+      <div className="flex items-center justify-center py-20">
+        <div className="text-lg text-muted-foreground">Loading event type...</div>
       </div>
     )
   }
 
   if (error && !formData.name) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <Link href="/dashboard" className="text-blue-600 hover:underline">
-            ← Back to Dashboard
+          <p className="text-destructive mb-4">{error}</p>
+          <Link href="/dashboard" className="text-primary hover:underline">
+            &larr; Back to Dashboard
           </Link>
         </div>
       </div>
@@ -134,81 +213,76 @@ export default function EditEventTypePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="text-blue-600 hover:text-blue-700">
-              ← Back to Dashboard
-            </Link>
-          </div>
-        </nav>
-      </header>
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Link
+          href="/dashboard/event-types"
+          className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Events
+        </Link>
+        <ChevronRight className="h-4 w-4" />
+        <span className="text-foreground">Edit Event</span>
+      </div>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow p-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Event Type</h1>
+      <Card>
+        <CardContent className="p-8">
+          <h1 className="text-2xl font-bold text-foreground mb-6">Edit Event Type</h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+              <div className="bg-destructive/10 text-destructive p-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Event Name *
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="name">Event Name *</Label>
+              <Input
+                id="name"
                 type="text"
                 required
                 value={formData.name}
                 onChange={(e) => handleNameChange(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="30-minute meeting"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                URL Slug *
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="slug">URL Slug *</Label>
+              <Input
+                id="slug"
                 type="text"
                 required
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="30-min-meeting"
                 pattern="[a-z0-9-]+"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground">
                 Your booking link will be: /yourusername/{formData.slug || 'event-slug'}
               </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Brief description of what this meeting is about..."
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Duration *
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="duration">Duration *</Label>
               <select
+                id="duration"
                 value={formData.duration}
                 onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <option value={15}>15 minutes</option>
                 <option value={30}>30 minutes</option>
@@ -219,29 +293,26 @@ export default function EditEventTypePage() {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Color
-              </label>
+            <div className="space-y-2">
+              <Label>Color</Label>
               <div className="flex gap-4 items-center">
                 <input
                   type="color"
                   value={formData.color}
                   onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                  className="w-20 h-12 border border-gray-300 rounded cursor-pointer"
+                  className="w-20 h-12 border border-input rounded cursor-pointer bg-background"
                 />
-                <span className="text-sm text-gray-600">{formData.color}</span>
+                <span className="text-sm text-muted-foreground">{formData.color}</span>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Meeting Location
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="location">Meeting Location</Label>
               <select
+                id="location"
                 value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) => setFormData({ ...formData, location: e.target.value, meetingLink: '' })}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <option value="">Select location type...</option>
                 <option value="zoom">📹 Zoom</option>
@@ -250,68 +321,220 @@ export default function EditEventTypePage() {
                 <option value="in_person">🏢 In Person</option>
                 <option value="custom">🔗 Custom Link</option>
               </select>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground">
                 Where will this meeting take place?
               </p>
             </div>
 
-            {(formData.location === 'zoom' || formData.location === 'google_meet' || formData.location === 'custom') && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Meeting Link {formData.location === 'zoom' ? '(Zoom)' : formData.location === 'google_meet' ? '(Google Meet)' : ''}
-                </label>
-                <input
-                  type="url"
-                  value={formData.meetingLink}
-                  onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder={
-                    formData.location === 'zoom' 
-                      ? 'https://zoom.us/j/123456789' 
-                      : formData.location === 'google_meet'
-                      ? 'https://meet.google.com/abc-defg-hij'
-                      : 'https://your-meeting-link.com'
-                  }
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  {formData.location === 'zoom' && 'Enter your Zoom meeting link (personal or recurring)'}
-                  {formData.location === 'google_meet' && 'Enter your Google Meet link'}
-                  {formData.location === 'custom' && 'Enter your custom meeting link (Microsoft Teams, Webex, etc.)'}
-                </p>
+            {/* Meeting link / integration section */}
+            {showMeetingLink && (
+              <div className="space-y-4 rounded-lg border border-border p-5 bg-muted/30">
+                <div className="flex items-center gap-2 mb-1">
+                  <Video className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">
+                    {formData.location === 'zoom' && 'Zoom Meeting Link'}
+                    {formData.location === 'google_meet' && 'Google Meet Link'}
+                    {formData.location === 'custom' && 'Custom Meeting Link'}
+                  </Label>
+                </div>
+
+                {/* Zoom section */}
+                {formData.location === 'zoom' && (
+                  <>
+                    {isZoomConnected ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+                            <Check className="h-3.5 w-3.5" />
+                            <span>Zoom connected</span>
+                          </div>
+                          {integrations?.zoom?.email && (
+                            <span className="text-muted-foreground">({integrations.zoom.email})</span>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Click 'Generate' or paste a link"
+                            value={formData.meetingLink}
+                            onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={generateMeetingLink}
+                            disabled={generatingLink}
+                            className="shrink-0"
+                          >
+                            {generatingLink ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <Link2 className="h-4 w-4 mr-2" />
+                                Generate Link
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Generate a Zoom link automatically, or paste your own meeting URL.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                          Connect your Zoom account to auto-generate meeting links, or paste a link manually.
+                        </p>
+                        <div className="flex gap-2 items-start">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              window.location.href = '/api/integrations/zoom/connect'
+                            }}
+                            className="shrink-0"
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Connect Zoom
+                          </Button>
+                          <span className="text-xs text-muted-foreground pt-2.5">or</span>
+                          <Input
+                            placeholder="https://zoom.us/j/123456789"
+                            value={formData.meetingLink}
+                            onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Google Meet section */}
+                {formData.location === 'google_meet' && (
+                  <>
+                    {isGoogleConnected ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+                            <Check className="h-3.5 w-3.5" />
+                            <span>Google Calendar connected</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Click 'Generate' or paste a link"
+                            value={formData.meetingLink}
+                            onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={generateMeetingLink}
+                            disabled={generatingLink}
+                            className="shrink-0"
+                          >
+                            {generatingLink ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <Link2 className="h-4 w-4 mr-2" />
+                                Generate Link
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Generate a Google Meet link automatically, or paste your own link.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                          Connect your Google Calendar to auto-generate Meet links, or paste a link manually.
+                        </p>
+                        <div className="flex gap-2 items-start">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              window.location.href = '/api/calendar/connect'
+                            }}
+                            className="shrink-0"
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Connect Google
+                          </Button>
+                          <span className="text-xs text-muted-foreground pt-2.5">or</span>
+                          <Input
+                            placeholder="https://meet.google.com/abc-defg-hij"
+                            value={formData.meetingLink}
+                            onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Custom link section */}
+                {formData.location === 'custom' && (
+                  <Input
+                    placeholder="https://your-meeting-link.com"
+                    value={formData.meetingLink}
+                    onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
+                  />
+                )}
+
+                {formData.meetingLink && (
+                  <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-3 py-2 rounded-md">
+                    <Check className="h-3 w-3" />
+                    <span>Meeting link set</span>
+                    <a
+                      href={formData.meetingLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-auto underline hover:no-underline"
+                    >
+                      Open link
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 
             <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
+              <Checkbox
                 id="isActive"
                 checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, isActive: checked === true })
+                }
               />
-              <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+              <Label htmlFor="isActive" className="font-medium cursor-pointer">
                 Active (visible on your booking page)
-              </label>
+              </Label>
             </div>
 
             <div className="flex gap-4 pt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+              <Button type="submit" disabled={loading} className="flex-1">
                 {loading ? 'Updating...' : 'Update Event Type'}
-              </button>
-              <Link
-                href="/dashboard"
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition"
-              >
-                Cancel
-              </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/dashboard/event-types">Cancel</Link>
+              </Button>
             </div>
           </form>
-        </div>
-      </main>
+        </CardContent>
+      </Card>
     </div>
   )
 }

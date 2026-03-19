@@ -27,18 +27,7 @@ model User {
   resetToken       String?   @map("reset_token")
   resetTokenExpiry DateTime? @map("reset_token_expiry")
 
-  // Subscription fields
-  subscriptionTier       String?   @default("free") @map("subscription_tier")
-  subscriptionStatus     String?   @default("active") @map("subscription_status")
-  razorpaySubscriptionId String?   @map("razorpay_subscription_id")
-  razorpayCustomerId     String?   @map("razorpay_customer_id")
-  razorpayPlanId         String?   @map("razorpay_plan_id")
-  currentPeriodStart     DateTime? @map("current_period_start")
-  currentPeriodEnd       DateTime? @map("current_period_end")
-  cancelAtPeriodEnd      Boolean   @default(false) @map("cancel_at_period_end")
-  trialEndsAt            DateTime? @map("trial_ends_at")
-
-  // Custom Branding (Pro/Business feature)
+  // Custom Branding
   brandLogoUrl     String? @map("brand_logo_url")
   brandColor       String? @default("#2563EB") @map("brand_color")
   brandName        String? @map("brand_name")
@@ -55,8 +44,7 @@ model User {
   dateOverrides       DateOverride[]
   accounts            Account[]
   sessions            Session[]
-  subscriptionHistory SubscriptionHistory[]
-  usageMetrics        UsageMetric[]
+  integrations        Integration[]
 
   @@map("users")
 }
@@ -129,6 +117,8 @@ model Booking {
   googleEventId      String?  @map("google_event_id")
   cancellationReason String?  @map("cancellation_reason")
 
+  meetingLink        String?  @map("meeting_link")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -191,63 +181,20 @@ model Session {
   @@map("sessions")
 }
 
-model PricingPlan {
-  id                    String  @id @default(uuid())
-  name                  String  @unique
-  displayName           String  @map("display_name")
-  description           String?
-  monthlyPrice          Decimal @map("monthly_price") @db.Decimal(10, 2)
-  yearlyPrice           Decimal @map("yearly_price") @db.Decimal(10, 2)
-  currency              String  @default("INR")
-  features              Json
-  limits                Json
-  razorpayPlanIdMonthly String? @map("razorpay_plan_id_monthly")
-  razorpayPlanIdYearly  String? @map("razorpay_plan_id_yearly")
-  isActive              Boolean @default(true) @map("is_active")
-  sortOrder             Int     @default(0) @map("sort_order")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("pricing_plans")
-}
-
-model SubscriptionHistory {
-  id              String   @id @default(uuid())
-  userId          String   @map("user_id")
-  action          String
-  fromTier        String?  @map("from_tier")
-  toTier          String   @map("to_tier")
-  amount          Decimal? @db.Decimal(10, 2)
-  currency        String   @default("INR")
-  paymentMethod   String?  @map("payment_method")
-  transactionId   String?  @map("transaction_id")
-  razorpayOrderId String?  @map("razorpay_order_id")
-  metadata        Json?
-
-  createdAt DateTime @default(now()) @map("created_at")
+model Integration {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  provider     String
+  accessToken  String    @map("access_token")
+  refreshToken String?   @map("refresh_token")
+  expiresAt    DateTime? @map("expires_at")
+  email        String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId, createdAt])
-  @@map("subscription_history")
-}
-
-model UsageMetric {
-  id          String   @id @default(uuid())
-  userId      String   @map("user_id")
-  metricType  String   @map("metric_type")
-  periodStart DateTime @map("period_start")
-  periodEnd   DateTime @map("period_end")
-  count       Int      @default(0)
-  limit       Int?
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, metricType, periodStart])
-  @@index([userId, periodStart])
-  @@map("usage_metrics")
+  @@unique([userId, provider])
+  @@index([userId])
+  @@map("integrations")
 }

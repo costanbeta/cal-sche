@@ -2,11 +2,16 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { format } from 'date-fns'
+import { ExternalLink, Video } from 'lucide-react'
+import DashboardHeader from '@/components/DashboardHeader'
+import LoadingSpinner from '@/components/LoadingSpinner'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
 interface EventType {
-  id: string
+  id?: string
   name: string
   duration: number
 }
@@ -20,16 +25,29 @@ interface Booking {
   endTime: string
   timezone: string
   status: string
+  meetingLink?: string
   eventType: EventType
+}
+
+function formatTimezone(tz: string): string {
+  const map: Record<string, string> = {
+    'GMT': 'Greenwich Mean Time',
+    'UTC': 'Coordinated Universal Time',
+    'EST': 'Eastern Standard Time',
+    'CST': 'Central Standard Time',
+    'MST': 'Mountain Standard Time',
+    'PST': 'Pacific Standard Time',
+  }
+  return map[tz] || tz
 }
 
 export default function BookingsPage() {
   const router = useRouter()
   const [bookings, setBookings] = useState<Booking[]>([])
-  const [filter, setFilter] = useState<'upcoming' | 'past' | 'cancelled'>('upcoming')
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'past' | 'cancelled'>('upcoming')
 
-  const fetchBookings = useCallback(async () => {
+  const fetchBookings = useCallback(async (filter: 'upcoming' | 'past' | 'cancelled') => {
     setLoading(true)
     try {
       let url = '/api/bookings?'
@@ -51,174 +69,218 @@ export default function BookingsPage() {
       }
 
       const data = await response.json()
-      
+
       let filteredBookings = data.bookings
       if (filter === 'past') {
         filteredBookings = filteredBookings.filter(
           (b: Booking) => new Date(b.startTime) < new Date()
         )
       }
-      
+
       setBookings(filteredBookings)
     } catch (error) {
       console.error('Failed to fetch bookings:', error)
     } finally {
       setLoading(false)
     }
-  }, [filter, router])
+  }, [router])
 
   useEffect(() => {
-    fetchBookings()
-  }, [fetchBookings])
+    fetchBookings(activeTab)
+  }, [activeTab, fetchBookings])
 
   const handleCancelBooking = async (bookingId: string) => {
-    const reason = prompt('Reason for cancellation (optional):')
-    
     try {
       const response = await fetch(`/api/bookings/${bookingId}/cancel`, {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason }),
       })
 
       if (response.ok) {
-        fetchBookings()
-      } else {
-        alert('Failed to cancel booking')
+        fetchBookings(activeTab)
       }
     } catch (error) {
       console.error('Failed to cancel booking:', error)
-      alert('Failed to cancel booking')
     }
   }
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as 'upcoming' | 'past' | 'cancelled')
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="text-blue-600 hover:text-blue-700">
-              ← Back to Dashboard
-            </Link>
-          </div>
-        </nav>
-      </header>
+    <div className="flex flex-col flex-1">
+      <DashboardHeader
+        title="Bookings"
+        description="View and manage your scheduled meetings"
+        showSearch
+      />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">All Bookings</h1>
-          <p className="text-gray-600">View and manage your scheduled meetings</p>
+      <div className="flex-1 px-6 py-6">
+        {loading && bookings.length === 0 ? (
+          <div className="flex items-center justify-center rounded-xl bg-accent/50 h-64">
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <Tabs
+            defaultValue="upcoming"
+            value={activeTab}
+            onValueChange={handleTabChange}
+          >
+            <TabsList className="bg-muted/50 rounded-lg">
+              <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+              <TabsTrigger value="past">Past</TabsTrigger>
+              <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="upcoming">
+              <BookingList
+                bookings={bookings}
+                loading={loading}
+                showActions
+                onCancel={handleCancelBooking}
+                emptyMessage="No Upcoming Booking"
+              />
+            </TabsContent>
+
+            <TabsContent value="past">
+              <BookingList
+                bookings={bookings}
+                loading={loading}
+                emptyMessage="No Past Bookings"
+              />
+            </TabsContent>
+
+            <TabsContent value="cancelled">
+              <BookingList
+                bookings={bookings}
+                loading={loading}
+                emptyMessage="No Cancelled Bookings"
+              />
+            </TabsContent>
+          </Tabs>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function BookingList({
+  bookings,
+  loading,
+  showActions,
+  onCancel,
+  emptyMessage,
+}: {
+  bookings: Booking[]
+  loading: boolean
+  showActions?: boolean
+  onCancel?: (id: string) => void
+  emptyMessage: string
+}) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center rounded-xl bg-accent/50 h-64 mt-4">
+        <LoadingSpinner />
+      </div>
+    )
+  }
+
+  if (bookings.length === 0) {
+    return (
+      <div className="flex items-center justify-center rounded-xl bg-accent/50 h-64 mt-4">
+        <p className="text-base font-medium text-muted-foreground">{emptyMessage}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-4 space-y-3">
+      {bookings.map((booking) => (
+        <BookingCard
+          key={booking.id}
+          booking={booking}
+          showActions={showActions}
+          onCancel={onCancel}
+        />
+      ))}
+    </div>
+  )
+}
+
+function BookingCard({
+  booking,
+  showActions,
+  onCancel,
+}: {
+  booking: Booking
+  showActions?: boolean
+  onCancel?: (id: string) => void
+}) {
+  const startDate = new Date(booking.startTime)
+  const endDate = new Date(booking.endTime)
+  const hostName = 'You'
+
+  const dateTimeString = `${format(startDate, 'EEEE, MMMM d, yyyy h:mm a')} - ${format(endDate, 'h:mm a')} (${formatTimezone(booking.timezone)})`
+
+  return (
+    <div className="border border-border rounded-lg p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 space-y-3">
+          <h3 className="text-base font-medium text-foreground">
+            {booking.eventType.duration} Min Meeting between {hostName} and{' '}
+            {booking.attendeeName}
+          </h3>
+
+          <p className="text-sm text-muted-foreground">{dateTimeString}</p>
+
+          {booking.meetingLink && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Video className="h-4 w-4" />
+              <a
+                href={booking.meetingLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline"
+              >
+                {booking.meetingLink}
+              </a>
+              <ExternalLink className="h-3 w-3" />
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <Badge variant="default">You</Badge>
+            <Badge variant="outline">{booking.attendeeEmail}</Badge>
+          </div>
+
+          {booking.attendeeNotes && (
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Note:</span>{' '}
+              {booking.attendeeNotes}
+            </p>
+          )}
         </div>
 
-        {/* Filter Tabs */}
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
-              <button
-                onClick={() => setFilter('upcoming')}
-                className={`px-6 py-4 font-medium text-sm border-b-2 transition ${
-                  filter === 'upcoming'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Upcoming
-              </button>
-              <button
-                onClick={() => setFilter('past')}
-                className={`px-6 py-4 font-medium text-sm border-b-2 transition ${
-                  filter === 'past'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Past
-              </button>
-              <button
-                onClick={() => setFilter('cancelled')}
-                className={`px-6 py-4 font-medium text-sm border-b-2 transition ${
-                  filter === 'cancelled'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Cancelled
-              </button>
-            </nav>
+        {showActions && (
+          <div className="flex flex-col gap-2 shrink-0">
+            <Button variant="outline" size="sm">
+              Start
+            </Button>
+            <Button variant="outline" size="sm">
+              Reschedule
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="bg-transparent text-destructive hover:bg-destructive/10 border-none shadow-none"
+              onClick={() => onCancel?.(booking.id)}
+            >
+              Cancel
+            </Button>
           </div>
-
-          {/* Bookings List */}
-          <div className="p-6">
-            {loading ? (
-              <div className="text-center py-8 text-gray-500">Loading...</div>
-            ) : bookings.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                No {filter} bookings found
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {bookings.map((booking) => (
-                  <div
-                    key={booking.id}
-                    className={`p-6 border rounded-lg ${
-                      booking.status === 'cancelled'
-                        ? 'border-red-200 bg-red-50'
-                        : 'border-gray-200 hover:border-blue-500'
-                    } transition`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {booking.eventType.name}
-                          </h3>
-                          {booking.status === 'cancelled' && (
-                            <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-medium rounded">
-                              Cancelled
-                            </span>
-                          )}
-                        </div>
-                        
-                        <div className="space-y-2 text-sm text-gray-600">
-                          <p>
-                            <strong>Attendee:</strong> {booking.attendeeName} ({booking.attendeeEmail})
-                          </p>
-                          <p>
-                            <strong>When:</strong>{' '}
-                            {format(new Date(booking.startTime), 'EEEE, MMMM d, yyyy @ h:mm a')}
-                          </p>
-                          <p>
-                            <strong>Duration:</strong> {booking.eventType.duration} minutes
-                          </p>
-                          <p>
-                            <strong>Timezone:</strong> {booking.timezone}
-                          </p>
-                          {booking.attendeeNotes && (
-                            <p>
-                              <strong>Notes:</strong> {booking.attendeeNotes}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {booking.status === 'confirmed' && new Date(booking.startTime) > new Date() && (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleCancelBooking(booking.id)}
-                            className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded border border-red-300"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
+        )}
+      </div>
     </div>
   )
 }

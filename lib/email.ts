@@ -12,13 +12,95 @@ const transporter = nodemailer.createTransport({
 
 function getLocationLabel(location: string): string {
   const labels: Record<string, string> = {
-    zoom: '📹 Zoom Meeting',
-    google_meet: '📹 Google Meet',
-    phone: '📞 Phone Call',
-    in_person: '🏢 In Person',
-    custom: '🔗 Video Call',
+    zoom: 'Zoom Meeting',
+    google_meet: 'Google Meet',
+    phone: 'Phone Call',
+    in_person: 'In Person',
+    custom: 'Video Call',
   }
   return labels[location] || location
+}
+
+const BRAND = {
+  name: 'Croodle',
+  bg: '#000000',
+  cardBg: '#171717',
+  secondaryBg: '#262626',
+  border: '#404040',
+  text: '#fafafa',
+  muted: '#a3a3a3',
+  btnBg: '#f5f5f5',
+  btnText: '#0a0a0a',
+  destructiveBg: '#dc2626',
+  destructiveText: '#ffffff',
+  successBg: '#14532d',
+  successText: '#bbf7d0',
+  warningBg: '#713f12',
+  warningText: '#fef08a',
+  infoBg: '#1e3a5f',
+  infoText: '#bfdbfe',
+}
+
+function emailLayout(content: string, opts?: { brandColor?: string; brandLogoUrl?: string; hidePoweredBy?: boolean }) {
+  const showPoweredBy = !opts?.hidePoweredBy
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { margin: 0; padding: 0; background-color: ${BRAND.bg}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+    .wrapper { max-width: 600px; margin: 0 auto; padding: 32px 16px; }
+    .card { background-color: ${BRAND.cardBg}; border: 1px solid ${BRAND.border}; border-radius: 12px; overflow: hidden; }
+    .card-header { padding: 24px 28px 0; }
+    .card-body { padding: 20px 28px 28px; }
+    .card-footer { border-top: 1px solid ${BRAND.border}; padding: 16px 28px; text-align: center; }
+    h1 { color: ${BRAND.text}; font-size: 20px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.3px; }
+    h2 { color: ${BRAND.text}; font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+    p { color: ${BRAND.muted}; font-size: 14px; line-height: 1.6; margin: 0 0 12px; }
+    .detail-box { background-color: ${BRAND.secondaryBg}; border-radius: 8px; padding: 16px 20px; margin: 16px 0; }
+    .detail-row { display: flex; padding: 4px 0; }
+    .detail-label { color: ${BRAND.muted}; font-size: 13px; min-width: 100px; }
+    .detail-value { color: ${BRAND.text}; font-size: 13px; font-weight: 500; }
+    .btn { display: inline-block; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; text-decoration: none !important; text-align: center; }
+    .btn-primary { background-color: ${BRAND.btnBg} !important; color: ${BRAND.btnText} !important; }
+    .btn-outline { background-color: transparent; color: ${BRAND.text} !important; border: 1px solid ${BRAND.border}; }
+    .btn-destructive { background-color: #dc2626 !important; color: #ffffff !important; }
+    .btn-group { text-align: center; margin: 24px 0 8px; }
+    .btn-group .btn { margin: 0 6px; }
+    .alert { border-radius: 8px; padding: 12px 16px; margin: 16px 0; font-size: 13px; }
+    .alert-warning { background-color: ${BRAND.warningBg}; color: ${BRAND.warningText}; }
+    .alert-info { background-color: ${BRAND.infoBg}; color: ${BRAND.infoText}; }
+    .alert-success { background-color: ${BRAND.successBg}; color: ${BRAND.successText}; }
+    .footer-text { color: #737373; font-size: 12px; margin: 0; }
+    .logo-area { margin-bottom: 16px; }
+    .logo-area img { max-width: 120px; max-height: 40px; }
+    .link { color: ${BRAND.muted}; word-break: break-all; font-size: 12px; }
+    .divider { border: none; border-top: 1px solid ${BRAND.border}; margin: 20px 0; }
+    a { color: ${BRAND.text}; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <div class="card-header">
+        <div class="logo-area">
+          ${opts?.brandLogoUrl
+            ? `<img src="${opts.brandLogoUrl}" alt="Logo" />`
+            : `<p style="color:${BRAND.text};font-size:16px;font-weight:600;margin:0;">${BRAND.name}</p>`
+          }
+        </div>
+      </div>
+      <div class="card-body">
+        ${content}
+      </div>
+      <div class="card-footer">
+        ${showPoweredBy ? `<p class="footer-text">Powered by ${BRAND.name}</p>` : ''}
+      </div>
+    </div>
+  </div>
+</body>
+</html>`
 }
 
 export interface BookingConfirmationData {
@@ -33,15 +115,11 @@ export interface BookingConfirmationData {
   attendeeNotes?: string
   meetingLink?: string
   location?: string
-  // Custom branding
   brandColor?: string
   brandLogoUrl?: string
   hidePoweredBy?: boolean
 }
 
-/**
- * Send booking confirmation email to attendee
- */
 export async function sendBookingConfirmation(
   data: BookingConfirmationData
 ): Promise<void> {
@@ -50,90 +128,68 @@ export async function sendBookingConfirmation(
     data.timezone,
     "EEEE, MMMM d, yyyy 'at' h:mm a"
   )
-  
-  const brandColor = data.brandColor || '#3b82f6'
-  const showPoweredBy = !data.hidePoweredBy
-  
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background-color: ${brandColor}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background-color: #f9fafb; padding: 30px; }
-          .detail-box { background-color: white; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid ${brandColor}; }
-          .button { display: inline-block; background-color: ${brandColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
-          .button-cancel { background-color: #ef4444; }
-          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; border-top: 1px solid #e5e7eb; }
-          .logo { max-width: 150px; max-height: 50px; margin-bottom: 15px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            ${data.brandLogoUrl ? `<img src="${data.brandLogoUrl}" alt="Logo" class="logo" />` : ''}
-            <h1>✓ Meeting Confirmed</h1>
-          </div>
-          <div class="content">
-            <h2>Hi ${data.attendeeName},</h2>
-            <p>Your meeting with <strong>${data.hostName}</strong> is confirmed!</p>
-            
-                        <div class="detail-box">
-              <p><strong>📅 ${data.eventName}</strong></p>
-              <p><strong>🕐</strong> ${formattedDate}</p>
-              <p><strong>⏱️</strong> ${data.duration} minutes</p>
-              <p><strong>🌍</strong> ${data.timezone}</p>
-              ${data.location && data.location !== '' ? `<p><strong>📍 Location:</strong> ${getLocationLabel(data.location)}</p>` : ''}
-              ${data.meetingLink ? `
-                <p style="margin-top: 12px;">
-                  <strong>🔗 Meeting Link:</strong><br/>
-                  <a href="${data.meetingLink}" style="color: ${brandColor}; text-decoration: none; word-break: break-all;">
-                    ${data.meetingLink}
-                  </a>
-                </p>
-              ` : ''}
-            </div>
-            
-            ${data.attendeeNotes ? `
-              <div class="detail-box">
-                <p><strong>Your notes:</strong></p>
-                <p>${data.attendeeNotes}</p>
-              </div>
-            ` : ''}
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.APP_URL}/booking/${data.bookingId}/cancel" class="button button-cancel">
-                Cancel Booking
-              </a>
-              <a href="${process.env.APP_URL}/booking/${data.bookingId}/reschedule" class="button">
-                Reschedule
-              </a>
-            </div>
-            
-            <p>Looking forward to meeting you!</p>
-            <p>Best regards,<br>${data.hostName}</p>
-          </div>
-          <div class="footer">
-            ${showPoweredBy ? `<p>Powered by ${process.env.APP_NAME || 'SchedulePro'}</p>` : ''}
-          </div>
-        </div>
-      </body>
-    </html>
+
+  const content = `
+    <h1>Meeting Confirmed</h1>
+    <p>Hi ${data.attendeeName}, your meeting with <strong style="color:${BRAND.text}">${data.hostName}</strong> is confirmed.</p>
+
+    <div class="detail-box">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:4px 0;width:100px;">Event</td>
+          <td style="color:${BRAND.text};font-size:13px;font-weight:500;padding:4px 0;">${data.eventName}</td>
+        </tr>
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:4px 0;">Date</td>
+          <td style="color:${BRAND.text};font-size:13px;font-weight:500;padding:4px 0;">${formattedDate}</td>
+        </tr>
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:4px 0;">Duration</td>
+          <td style="color:${BRAND.text};font-size:13px;font-weight:500;padding:4px 0;">${data.duration} minutes</td>
+        </tr>
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:4px 0;">Timezone</td>
+          <td style="color:${BRAND.text};font-size:13px;font-weight:500;padding:4px 0;">${data.timezone}</td>
+        </tr>
+        ${data.location ? `
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:4px 0;">Location</td>
+          <td style="color:${BRAND.text};font-size:13px;font-weight:500;padding:4px 0;">${getLocationLabel(data.location)}</td>
+        </tr>` : ''}
+        ${data.meetingLink ? `
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:8px 0 4px;">Link</td>
+          <td style="font-size:13px;padding:8px 0 4px;"><a href="${data.meetingLink}" style="color:${BRAND.text};word-break:break-all;">${data.meetingLink}</a></td>
+        </tr>` : ''}
+      </table>
+    </div>
+
+    ${data.attendeeNotes ? `
+    <div class="detail-box">
+      <p style="color:${BRAND.text};font-size:13px;font-weight:500;margin:0 0 4px;">Your notes</p>
+      <p style="margin:0;font-size:13px;">${data.attendeeNotes}</p>
+    </div>` : ''}
+
+    <div class="btn-group">
+      <a href="${process.env.APP_URL}/booking/${data.bookingId}/reschedule" class="btn btn-primary" style="display:inline-block;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;background-color:${BRAND.btnBg};color:${BRAND.btnText};margin:0 6px;">Reschedule</a>
+      <a href="${process.env.APP_URL}/booking/${data.bookingId}/cancel" class="btn btn-destructive" style="display:inline-block;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;background-color:${BRAND.destructiveBg};color:${BRAND.destructiveText};margin:0 6px;">Cancel</a>
+    </div>
+
+    <hr class="divider" />
+    <p style="font-size:13px;">Looking forward to meeting you!<br/><strong style="color:${BRAND.text}">${data.hostName}</strong></p>
   `
-  
+
   await transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to: data.attendeeEmail,
     subject: `Meeting confirmed with ${data.hostName}`,
-    html,
+    html: emailLayout(content, {
+      brandLogoUrl: data.brandLogoUrl,
+      hidePoweredBy: data.hidePoweredBy,
+    }),
   })
 }
 
-/**
- * Send booking notification to host
- */
 export async function sendBookingNotification(
   data: BookingConfirmationData & { hostEmail: string }
 ): Promise<void> {
@@ -142,74 +198,61 @@ export async function sendBookingNotification(
     data.timezone,
     "EEEE, MMMM d, yyyy 'at' h:mm a"
   )
-  
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background-color: #3b82f6; color: white; padding: 20px; text-align: center; }
-          .content { background-color: #f9fafb; padding: 30px; }
-          .detail-box { background-color: white; padding: 20px; margin: 20px 0; border-radius: 8px; }
-          .button { display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>🎉 New Booking!</h1>
-          </div>
-          <div class="content">
-            <h2>Hi ${data.hostName},</h2>
-            <p>You have a new booking from <strong>${data.attendeeName}</strong></p>
-            
-                        <div class="detail-box">
-              <p><strong>👤</strong> ${data.attendeeName} (${data.attendeeEmail})</p>
-              <p><strong>📅</strong> ${data.eventName}</p>
-              <p><strong>🕐</strong> ${formattedDate}</p>
-              <p><strong>⏱️</strong> ${data.duration} minutes</p>
-              ${data.location && data.location !== '' ? `<p><strong>📍 Location:</strong> ${getLocationLabel(data.location)}</p>` : ''}
-              ${data.meetingLink ? `
-                <p style="margin-top: 12px;">
-                  <strong>🔗 Meeting Link:</strong><br/>
-                  <a href="${data.meetingLink}" style="color: #3b82f6; text-decoration: none; word-break: break-all;">
-                    ${data.meetingLink}
-                  </a>
-                </p>
-              ` : ''}
-            </div>
-            
-            ${data.attendeeNotes ? `
-              <div class="detail-box">
-                <p><strong>Attendee's notes:</strong></p>
-                <p>${data.attendeeNotes}</p>
-              </div>
-            ` : ''}
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.APP_URL}/dashboard" class="button">
-                View in Dashboard
-              </a>
-            </div>
-          </div>
-        </div>
-      </body>
-    </html>
+
+  const content = `
+    <h1>New Booking</h1>
+    <p>Hi ${data.hostName}, you have a new booking from <strong style="color:${BRAND.text}">${data.attendeeName}</strong>.</p>
+
+    <div class="detail-box">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:4px 0;width:100px;">Attendee</td>
+          <td style="color:${BRAND.text};font-size:13px;font-weight:500;padding:4px 0;">${data.attendeeName} (${data.attendeeEmail})</td>
+        </tr>
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:4px 0;">Event</td>
+          <td style="color:${BRAND.text};font-size:13px;font-weight:500;padding:4px 0;">${data.eventName}</td>
+        </tr>
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:4px 0;">Date</td>
+          <td style="color:${BRAND.text};font-size:13px;font-weight:500;padding:4px 0;">${formattedDate}</td>
+        </tr>
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:4px 0;">Duration</td>
+          <td style="color:${BRAND.text};font-size:13px;font-weight:500;padding:4px 0;">${data.duration} minutes</td>
+        </tr>
+        ${data.location ? `
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:4px 0;">Location</td>
+          <td style="color:${BRAND.text};font-size:13px;font-weight:500;padding:4px 0;">${getLocationLabel(data.location)}</td>
+        </tr>` : ''}
+        ${data.meetingLink ? `
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:8px 0 4px;">Link</td>
+          <td style="font-size:13px;padding:8px 0 4px;"><a href="${data.meetingLink}" style="color:${BRAND.text};word-break:break-all;">${data.meetingLink}</a></td>
+        </tr>` : ''}
+      </table>
+    </div>
+
+    ${data.attendeeNotes ? `
+    <div class="detail-box">
+      <p style="color:${BRAND.text};font-size:13px;font-weight:500;margin:0 0 4px;">Attendee&rsquo;s notes</p>
+      <p style="margin:0;font-size:13px;">${data.attendeeNotes}</p>
+    </div>` : ''}
+
+    <div class="btn-group">
+      <a href="${process.env.APP_URL}/dashboard" class="btn btn-primary" style="display:inline-block;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;background-color:${BRAND.btnBg};color:${BRAND.btnText};">View in Dashboard</a>
+    </div>
   `
-  
+
   await transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to: data.hostEmail,
     subject: `New booking: ${data.eventName} with ${data.attendeeName}`,
-    html,
+    html: emailLayout(content),
   })
 }
 
-/**
- * Send meeting reminder (24 hours before)
- */
 export async function sendMeetingReminder(
   data: BookingConfirmationData
 ): Promise<void> {
@@ -218,49 +261,45 @@ export async function sendMeetingReminder(
     data.timezone,
     "EEEE, MMMM d, yyyy 'at' h:mm a"
   )
-  
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background-color: #3b82f6; color: white; padding: 20px; text-align: center; }
-          .content { padding: 30px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>⏰ Meeting Reminder</h1>
-          </div>
-          <div class="content">
-            <h2>Hi ${data.attendeeName},</h2>
-            <p>This is a reminder about your upcoming meeting with <strong>${data.hostName}</strong></p>
-            
-            <p><strong>📅 ${data.eventName}</strong></p>
-            <p><strong>🕐</strong> Tomorrow at ${formatInTimeZone(data.startTime, data.timezone, 'h:mm a')}</p>
-            <p><strong>⏱️</strong> ${data.duration} minutes</p>
-            
-            <p style="margin-top: 30px;">See you then!</p>
-          </div>
-        </div>
-      </body>
-    </html>
+  const formattedTime = formatInTimeZone(data.startTime, data.timezone, 'h:mm a')
+
+  const content = `
+    <h1>Meeting Reminder</h1>
+    <p>Hi ${data.attendeeName}, this is a reminder about your upcoming meeting with <strong style="color:${BRAND.text}">${data.hostName}</strong>.</p>
+
+    <div class="detail-box">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:4px 0;width:100px;">Event</td>
+          <td style="color:${BRAND.text};font-size:13px;font-weight:500;padding:4px 0;">${data.eventName}</td>
+        </tr>
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:4px 0;">When</td>
+          <td style="color:${BRAND.text};font-size:13px;font-weight:500;padding:4px 0;">Tomorrow at ${formattedTime}</td>
+        </tr>
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:4px 0;">Duration</td>
+          <td style="color:${BRAND.text};font-size:13px;font-weight:500;padding:4px 0;">${data.duration} minutes</td>
+        </tr>
+        ${data.meetingLink ? `
+        <tr>
+          <td style="color:${BRAND.muted};font-size:13px;padding:8px 0 4px;">Link</td>
+          <td style="font-size:13px;padding:8px 0 4px;"><a href="${data.meetingLink}" style="color:${BRAND.text};word-break:break-all;">${data.meetingLink}</a></td>
+        </tr>` : ''}
+      </table>
+    </div>
+
+    <p style="font-size:13px;">See you then!</p>
   `
-  
+
   await transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to: data.attendeeEmail,
     subject: `Reminder: Meeting with ${data.hostName} tomorrow`,
-    html,
+    html: emailLayout(content),
   })
 }
 
-/**
- * Send cancellation email
- */
 export async function sendCancellationEmail(
   attendeeEmail: string,
   attendeeName: string,
@@ -268,171 +307,84 @@ export async function sendCancellationEmail(
   eventName: string,
   reason?: string
 ): Promise<void> {
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background-color: #ef4444; color: white; padding: 20px; text-align: center; }
-          .content { padding: 30px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>❌ Meeting Cancelled</h1>
-          </div>
-          <div class="content">
-            <h2>Hi ${attendeeName},</h2>
-            <p>Your meeting "<strong>${eventName}</strong>" with ${hostName} has been cancelled.</p>
-            
-            ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
-            
-            <p>If you'd like to reschedule, please visit the booking page again.</p>
-          </div>
-        </div>
-      </body>
-    </html>
+  const content = `
+    <h1>Meeting Cancelled</h1>
+    <p>Hi ${attendeeName}, your meeting <strong style="color:${BRAND.text}">&ldquo;${eventName}&rdquo;</strong> with ${hostName} has been cancelled.</p>
+
+    ${reason ? `
+    <div class="alert alert-warning">
+      <strong>Reason:</strong> ${reason}
+    </div>` : ''}
+
+    <p>If you&rsquo;d like to reschedule, please visit the booking page again.</p>
   `
-  
+
   await transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to: attendeeEmail,
     subject: `Meeting cancelled: ${eventName}`,
-    html,
+    html: emailLayout(content),
   })
 }
 
-/**
- * Send password reset email
- */
 export async function sendPasswordResetEmail(
   email: string,
   name: string,
   resetToken: string
 ): Promise<void> {
   const resetUrl = `${process.env.APP_URL}/auth/reset-password?token=${resetToken}`
-  
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background-color: #3b82f6; color: white; padding: 20px; text-align: center; }
-          .content { background-color: #f9fafb; padding: 30px; }
-          .button { display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-          .warning { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
-          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>🔒 Password Reset Request</h1>
-          </div>
-          <div class="content">
-            <h2>Hi ${name},</h2>
-            <p>We received a request to reset your password. Click the button below to create a new password:</p>
-            
-            <div style="text-align: center;">
-              <a href="${resetUrl}" class="button">
-                Reset Password
-              </a>
-            </div>
-            
-            <div class="warning">
-              <p><strong>⚠️ Important:</strong></p>
-              <p>This link will expire in 1 hour for security reasons.</p>
-              <p>If you didn't request this password reset, please ignore this email or contact support if you have concerns.</p>
-            </div>
-            
-            <p style="color: #666; font-size: 14px;">
-              If the button doesn't work, copy and paste this link into your browser:<br/>
-              <a href="${resetUrl}" style="color: #3b82f6; word-break: break-all;">${resetUrl}</a>
-            </p>
-          </div>
-          <div class="footer">
-            <p>Powered by ${process.env.APP_NAME || 'SchedulePro'}</p>
-          </div>
-        </div>
-      </body>
-    </html>
+
+  const content = `
+    <h1>Reset your password</h1>
+    <p>Hi ${name}, we received a request to reset your password. Click the button below to create a new one.</p>
+
+    <div class="btn-group">
+      <a href="${resetUrl}" class="btn btn-primary" style="display:inline-block;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;background-color:${BRAND.btnBg};color:${BRAND.btnText};">Reset Password</a>
+    </div>
+
+    <div class="alert alert-warning">
+      <strong>Important:</strong> This link expires in 1 hour. If you didn&rsquo;t request this reset, you can safely ignore this email.
+    </div>
+
+    <hr class="divider" />
+    <p class="link">If the button doesn&rsquo;t work, copy and paste this link:<br/><a href="${resetUrl}" class="link">${resetUrl}</a></p>
   `
-  
+
   await transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to: email,
     subject: 'Reset Your Password',
-    html,
+    html: emailLayout(content),
   })
 }
 
-/**
- * Send email verification email
- */
 export async function sendEmailVerification(
   email: string,
   name: string,
   verificationToken: string
 ): Promise<void> {
   const verificationUrl = `${process.env.APP_URL}/auth/verify-email?token=${verificationToken}`
-  
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background-color: #3b82f6; color: white; padding: 20px; text-align: center; }
-          .content { background-color: #f9fafb; padding: 30px; }
-          .button { display: inline-block; background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-          .info { background-color: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; }
-          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>✉️ Verify Your Email Address</h1>
-          </div>
-          <div class="content">
-            <h2>Hi ${name},</h2>
-            <p>Welcome to ${process.env.APP_NAME || 'Croodle'}! Please verify your email address to get started.</p>
-            
-            <div style="text-align: center;">
-              <a href="${verificationUrl}" class="button">
-                Verify Email Address
-              </a>
-            </div>
-            
-            <div class="info">
-              <p><strong>ℹ️ Note:</strong></p>
-              <p>This verification link will expire in 24 hours.</p>
-              <p>If you didn't create an account, you can safely ignore this email.</p>
-            </div>
-            
-            <p style="color: #666; font-size: 14px;">
-              If the button doesn't work, copy and paste this link into your browser:<br/>
-              <a href="${verificationUrl}" style="color: #3b82f6; word-break: break-all;">${verificationUrl}</a>
-            </p>
-          </div>
-          <div class="footer">
-            <p>Powered by ${process.env.APP_NAME || 'SchedulePro'}</p>
-          </div>
-        </div>
-      </body>
-    </html>
+
+  const content = `
+    <h1>Verify your email</h1>
+    <p>Hi ${name}, welcome to ${BRAND.name}! Please verify your email address to get started.</p>
+
+    <div class="btn-group">
+      <a href="${verificationUrl}" class="btn btn-primary" style="display:inline-block;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:500;text-decoration:none;background-color:${BRAND.btnBg};color:${BRAND.btnText};">Verify Email Address</a>
+    </div>
+
+    <div class="alert alert-info">
+      This verification link expires in 24 hours. If you didn&rsquo;t create an account, you can safely ignore this email.
+    </div>
+
+    <hr class="divider" />
+    <p class="link">If the button doesn&rsquo;t work, copy and paste this link:<br/><a href="${verificationUrl}" class="link">${verificationUrl}</a></p>
   `
-  
+
   await transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to: email,
     subject: 'Verify Your Email Address',
-    html,
+    html: emailLayout(content),
   })
 }

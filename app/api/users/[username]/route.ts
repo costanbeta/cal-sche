@@ -22,7 +22,6 @@ export async function GET(
         brandName: true,
         hidePoweredBy: true,
         customFooterText: true,
-        subscriptionTier: true,
         eventTypes: {
           where: {
             isActive: true,

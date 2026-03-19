@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { canUseBranding, validateBrandColor } from '@/lib/branding'
+import { validateBrandColor } from '@/lib/branding'
 
 export async function GET(req: NextRequest) {
   try {
@@ -29,7 +29,6 @@ export async function GET(req: NextRequest) {
     const userData = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: {
-        subscriptionTier: true,
         brandLogoUrl: true,
         brandColor: true,
         brandName: true,
@@ -53,7 +52,6 @@ export async function GET(req: NextRequest) {
         hidePoweredBy: userData.hidePoweredBy,
         customFooterText: userData.customFooterText,
       },
-      canUseBranding: canUseBranding(userData.subscriptionTier || undefined),
     })
   } catch (error) {
     console.error('Error fetching branding:', error)
@@ -87,26 +85,6 @@ export async function PUT(req: NextRequest) {
       )
     }
 
-    const userData = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: { subscriptionTier: true },
-    })
-
-    if (!userData) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      )
-    }
-
-    // Check if user has access to branding features
-    if (!canUseBranding(userData.subscriptionTier || undefined)) {
-      return NextResponse.json(
-        { error: 'Custom branding requires Pro or Business plan' },
-        { status: 403 }
-      )
-    }
-
     const body = await req.json()
     const { brandLogoUrl, brandColor, brandName, hidePoweredBy, customFooterText } = body
 
@@ -128,14 +106,6 @@ export async function PUT(req: NextRequest) {
           { status: 400 }
         )
       }
-    }
-
-    // Business plan check for hidePoweredBy
-    if (hidePoweredBy && userData.subscriptionTier !== 'business') {
-      return NextResponse.json(
-        { error: 'Hiding "Powered by" requires Business plan' },
-        { status: 403 }
-      )
     }
 
     // Update branding settings

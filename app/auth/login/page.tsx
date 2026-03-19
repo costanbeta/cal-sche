@@ -80,7 +80,7 @@ export default function LoginPage() {
           {/* Testimonial */}
           <div className="text-white">
             <p className="text-base leading-relaxed">
-              &quot;This library has saved me countless hours of work and helped me deliver stunning designs to my clients faster than ever before.&quot; - Sofia Davis
+              &quot;Croodle helps me organize my meetings and save hours every week.&quot; — Product Manager
             </p>
           </div>
         </div>

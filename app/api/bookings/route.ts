@@ -6,7 +6,9 @@ import { addMinutes, parseISO } from 'date-fns'
 import { doTimesOverlap } from '@/lib/availability'
 import { sendBookingConfirmation, sendBookingNotification } from '@/lib/email'
 import { createGoogleCalendarEvent } from '@/lib/google-calendar'
-import { checkUsageLimit } from '@/lib/subscription'
+import { createZoomMeeting, getValidZoomToken } from '@/lib/zoom'
+import { google } from 'googleapis'
+import { randomUUID } from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
@@ -62,18 +64,6 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Check booking limits for the event owner
-    const usageCheck = await checkUsageLimit(eventType.userId, 'bookingsPerMonth')
-    if (!usageCheck.allowed) {
-      return NextResponse.json(
-        {
-          error: 'Booking limit reached',
-          message: `This user has reached their monthly booking limit of ${usageCheck.limit}. Please contact them to upgrade their plan or try again next month.`,
-        },
-        { status: 403 }
-      )
-    }
-    
     const startTime = parseISO(validatedData.startTime)
     const endTime = addMinutes(startTime, eventType.duration)
     
@@ -124,6 +114,86 @@ export async function POST(request: NextRequest) {
       },
     })
     
+    // Auto-generate meeting link if integration is connected
+    let generatedMeetingLink: string | null = null
+    try {
+      if (eventType.location === 'zoom') {
+        const zoomIntegration = await prisma.integration.findUnique({
+          where: { userId_provider: { userId: eventType.userId, provider: 'zoom' } },
+        })
+        if (zoomIntegration) {
+          const validToken = await getValidZoomToken(
+            zoomIntegration.accessToken,
+            zoomIntegration.refreshToken,
+            zoomIntegration.expiresAt
+          )
+          if (validToken.refreshToken) {
+            await prisma.integration.update({
+              where: { id: zoomIntegration.id },
+              data: {
+                accessToken: validToken.accessToken,
+                refreshToken: validToken.refreshToken,
+                expiresAt: validToken.expiresAt,
+              },
+            })
+          }
+          const meeting = await createZoomMeeting(validToken.accessToken, {
+            topic: `${eventType.name} with ${booking.attendeeName}`,
+            duration: eventType.duration,
+            startTime: booking.startTime.toISOString(),
+            agenda: `Booked via ${process.env.APP_NAME || 'SchedulePro'}`,
+          })
+          generatedMeetingLink = meeting.joinUrl
+        }
+      } else if (eventType.location === 'google_meet' && !eventType.meetingLink) {
+        const calConn = await prisma.calendarConnection.findFirst({
+          where: { userId: eventType.userId, provider: 'google' },
+        })
+        if (calConn) {
+          const meetOauth = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            `${process.env.APP_URL}/api/calendar/callback`
+          )
+          meetOauth.setCredentials({
+            access_token: calConn.accessToken,
+            refresh_token: calConn.refreshToken,
+          })
+          const cal = google.calendar({ version: 'v3', auth: meetOauth })
+          const meetEvent = await cal.events.insert({
+            calendarId: 'primary',
+            conferenceDataVersion: 1,
+            requestBody: {
+              summary: `${eventType.name} with ${booking.attendeeName}`,
+              start: { dateTime: booking.startTime.toISOString(), timeZone: 'UTC' },
+              end: { dateTime: booking.endTime.toISOString(), timeZone: 'UTC' },
+              conferenceData: {
+                createRequest: {
+                  requestId: randomUUID(),
+                  conferenceSolutionKey: { type: 'hangoutsMeet' },
+                },
+              },
+              attendees: [{ email: booking.attendeeEmail }],
+            },
+          })
+          generatedMeetingLink = meetEvent.data.conferenceData?.entryPoints?.find(
+            (e) => e.entryPointType === 'video'
+          )?.uri || null
+        }
+      }
+
+      if (generatedMeetingLink) {
+        await prisma.booking.update({
+          where: { id: booking.id },
+          data: { meetingLink: generatedMeetingLink },
+        })
+      }
+    } catch (meetingError) {
+      console.error('Failed to auto-generate meeting link:', meetingError)
+    }
+
+    const effectiveMeetingLink = generatedMeetingLink || eventType.meetingLink || null
+
     // Create Google Calendar event if user has calendar connected
     try {
       const calendarConnection = await prisma.calendarConnection.findFirst({
@@ -177,7 +247,7 @@ export async function POST(request: NextRequest) {
           timezone: booking.timezone,
           bookingId: booking.id,
           attendeeNotes: booking.attendeeNotes || undefined,
-          meetingLink: eventType.meetingLink || undefined,
+          meetingLink: effectiveMeetingLink || undefined,
           location: eventType.location || undefined,
         }),
         sendBookingNotification({
@@ -191,7 +261,7 @@ export async function POST(request: NextRequest) {
           timezone: booking.timezone,
           bookingId: booking.id,
           attendeeNotes: booking.attendeeNotes || undefined,
-          meetingLink: eventType.meetingLink || undefined,
+          meetingLink: effectiveMeetingLink || undefined,
           location: eventType.location || undefined,
         }),
       ])

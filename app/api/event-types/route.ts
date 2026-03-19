@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { authMiddleware, unauthorizedResponse } from '@/lib/middleware'
 import { eventTypeSchema } from '@/lib/validations'
 import { generateSlug } from '@/lib/auth'
-import { checkUsageLimit } from '@/lib/subscription'
+import { checkEventTypeLimit } from '@/lib/subscription'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,17 +35,14 @@ export async function POST(request: NextRequest) {
     const auth = await authMiddleware(request)
     if (!auth) return unauthorizedResponse()
     
-    // Check usage limits
-    const usageCheck = await checkUsageLimit(auth.userId, 'eventTypes')
+    const usageCheck = await checkEventTypeLimit(auth.userId)
     if (!usageCheck.allowed) {
       return NextResponse.json(
         {
           error: 'Event type limit reached',
-          message: `You've reached your limit of ${usageCheck.limit} event types. Upgrade to Pro for unlimited event types.`,
+          message: `You've reached the maximum limit of ${usageCheck.limit} event types.`,
           current: usageCheck.current,
           limit: usageCheck.limit,
-          tier: usageCheck.tier,
-          upgradeUrl: '/pricing',
         },
         { status: 403 }
       )

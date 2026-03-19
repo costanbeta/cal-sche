@@ -1,281 +1,381 @@
 import Link from 'next/link'
 import Logo from '@/components/Logo'
 import BrandedFooter from '@/components/BrandedFooter'
+import HeroMockup from '@/components/HeroMockup'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import {
+  Calendar,
+  RefreshCw,
+  Mail,
+  Palette,
+  Users,
+  Check,
+  Heart,
+  ExternalLink,
+  ArrowRight,
+  Zap,
+  Shield,
+} from 'lucide-react'
+
+const stats = [
+  { value: '5,000+', label: 'Professionals' },
+  { value: '120K+', label: 'Meetings Scheduled' },
+  { value: '2 min', label: 'Setup Time' },
+  { value: '100%', label: 'Free Forever' },
+]
+
+const features = [
+  {
+    icon: Calendar,
+    title: 'Easy Scheduling',
+    description:
+      'Create custom event types with your availability. Share your link and let others book time with you instantly.',
+    color: 'text-blue-400',
+    bg: 'bg-blue-500/10',
+  },
+  {
+    icon: RefreshCw,
+    title: 'Calendar Sync',
+    description:
+      'Connect your Google Calendar to prevent double-booking and automatically add meetings to your calendar.',
+    color: 'text-green-400',
+    bg: 'bg-green-500/10',
+  },
+  {
+    icon: Mail,
+    title: 'Smart Notifications',
+    description:
+      'Automatic email confirmations and reminders for both you and your attendees. Never miss a meeting.',
+    color: 'text-purple-400',
+    bg: 'bg-purple-500/10',
+  },
+  {
+    icon: Palette,
+    title: 'Custom Branding',
+    description:
+      'Add your logo, brand colors, and custom messaging to create a professional booking experience.',
+    color: 'text-orange-400',
+    bg: 'bg-orange-500/10',
+  },
+  {
+    icon: Shield,
+    title: 'Out of Office',
+    description:
+      'Block specific dates and date ranges so bookings only happen when you are actually available.',
+    color: 'text-red-400',
+    bg: 'bg-red-500/10',
+  },
+  {
+    icon: Zap,
+    title: 'Instant Setup',
+    description:
+      'Go from sign-up to your first booking in under 2 minutes. No technical knowledge required.',
+    color: 'text-yellow-400',
+    bg: 'bg-yellow-500/10',
+  },
+]
+
+const steps = [
+  {
+    number: '01',
+    title: 'Sign Up',
+    description: 'Create your free account in seconds. No credit card required.',
+    icon: Users,
+  },
+  {
+    number: '02',
+    title: 'Set Availability',
+    description: 'Define your working hours and create custom event types.',
+    icon: Calendar,
+  },
+  {
+    number: '03',
+    title: 'Share Your Link',
+    description: 'Send your personalized booking page to anyone, anywhere.',
+    icon: ArrowRight,
+  },
+  {
+    number: '04',
+    title: 'Get Booked',
+    description: 'Let others schedule meetings with you automatically.',
+    icon: Zap,
+  },
+]
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
-            <Logo size="md" showText={true} />
+            <Logo size="md" showText />
             <div className="flex gap-4 items-center">
               <Link
-                href="/pricing"
-                className="px-4 py-2 text-gray-700 hover:text-blue-600 transition font-medium"
+                href="/donate"
+                className="hidden sm:flex items-center gap-1.5 text-sm text-red-500 hover:text-red-400 font-medium transition-colors"
               >
-                Pricing
+                <Heart className="h-3.5 w-3.5 fill-red-500" />
+                Donate
               </Link>
               <Link
                 href="/auth/login"
-                className="px-4 py-2 text-gray-700 hover:text-blue-600 transition font-medium"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Login
               </Link>
-              <Link
-                href="/auth/signup"
-                className="btn-brand-primary"
-              >
-                Sign Up
-              </Link>
+              <Button asChild size="sm" className="animate-glow-pulse">
+                <Link href="/auth/signup">Sign Up Free</Link>
+              </Button>
             </div>
           </div>
         </nav>
       </header>
 
-      {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center">
-          {/* Main Badge */}
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-6">
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            Trusted by 5,000+ professionals worldwide
+      <main>
+        {/* ── Hero ──────────────────────────────────────────────── */}
+        <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-28 overflow-hidden">
+          {/* Background radial glow */}
+          <div
+            className="pointer-events-none absolute inset-0 -z-10"
+            aria-hidden
+          >
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] rounded-full bg-primary/5 blur-3xl" />
+            <div className="absolute top-1/3 right-0 w-[400px] h-[400px] rounded-full bg-blue-500/5 blur-3xl animate-float-slow" />
           </div>
 
-          <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-            Schedule smarter,<br />
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              not harder
-            </span>
-          </h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Eliminate the back-and-forth emails. Share your scheduling link and let others book meetings with you instantly.
-          </p>
-          <div className="flex gap-4 justify-center flex-wrap">
-            <Link
-              href="/auth/signup"
-              className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            >
-              Get Started Free →
-            </Link>
-            <Link
-              href="#features"
-              className="px-8 py-4 bg-white text-blue-600 text-lg font-semibold rounded-lg hover:bg-gray-50 transition shadow-lg border-2 border-blue-600"
-            >
-              Learn More
-            </Link>
-          </div>
-          
-          {/* Trust Indicators */}
-          <div className="mt-12 flex items-center justify-center gap-8 text-sm text-gray-600 flex-wrap">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>No credit card required</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>Free forever plan</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>Setup in 2 minutes</span>
-            </div>
-          </div>
-        </div>
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left — headline & CTA */}
+            <div>
+              <div className="animate-fade-in-up">
+                <Badge variant="secondary" className="mb-6 gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  Trusted by 5,000+ professionals worldwide
+                </Badge>
+              </div>
 
-        {/* Features */}
-        <div id="features" className="mt-32">
-          <div className="text-center mb-16">
-            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-6 animate-fade-in-up animation-delay-100">
+                Schedule smarter,
+                <br />
+                <span className="relative">
+                  not harder
+                  {/* Animated underline */}
+                  <span
+                    className="absolute bottom-1 left-0 h-0.5 bg-primary/40 animate-fade-in animation-delay-700"
+                    style={{ width: '100%' }}
+                  />
+                </span>
+              </h1>
+
+              <p className="text-lg text-muted-foreground max-w-lg mb-8 animate-fade-in-up animation-delay-200">
+                Eliminate the back-and-forth emails. Share your scheduling link
+                and let others book meetings with you instantly — completely free.
+              </p>
+
+              <div className="flex gap-3 flex-wrap animate-fade-in-up animation-delay-300">
+                <Button asChild size="lg" className="group gap-2">
+                  <Link href="/auth/signup">
+                    Get Started Free
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="lg">
+                  <Link href="#features">See Features</Link>
+                </Button>
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-5 text-sm text-muted-foreground animate-fade-in-up animation-delay-400">
+                {['Completely free', 'No credit card', 'Setup in 2 min'].map((t) => (
+                  <span key={t} className="flex items-center gap-1.5">
+                    <Check className="h-4 w-4 text-green-500" />
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Right — animated booking UI mockup */}
+            <div className="animate-scale-in animation-delay-400">
+              <HeroMockup />
+            </div>
+          </div>
+        </section>
+
+        {/* ── Stats bar ─────────────────────────────────────────── */}
+        <section className="border-y border-border bg-secondary/20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {stats.map((s, i) => (
+                <div
+                  key={s.label}
+                  className={`text-center animate-fade-in-up animation-delay-${(i + 1) * 100}`}
+                >
+                  <p className="text-3xl font-bold text-foreground">{s.value}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Features ──────────────────────────────────────────── */}
+        <section
+          id="features"
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-28"
+        >
+          <div className="text-center mb-16 animate-fade-in-up">
+            <Badge variant="secondary" className="mb-4">Features</Badge>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Everything you need for effortless scheduling
-            </h3>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Powerful features to help you manage your time and grow your business
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="card-brand p-8 group hover:scale-105 transition-transform">
-              <div className="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
-                <svg className="w-7 h-7 text-blue-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-3">Easy Scheduling</h3>
-              <p className="text-gray-600">
-                Create custom event types with your availability. Share your link and let others book time with you instantly.
+          <div className="grid md:grid-cols-3 gap-6">
+            {features.map((feature, i) => (
+              <Card
+                key={feature.title}
+                className={`p-6 bg-card border-border hover:border-border/80 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-fade-in-up animation-delay-${(i % 3) * 100 + 100}`}
+              >
+                <div className={`rounded-xl ${feature.bg} p-3 w-fit mb-4`}>
+                  <feature.icon className={`h-5 w-5 ${feature.color}`} />
+                </div>
+                <h3 className="text-foreground font-semibold mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {feature.description}
+                </p>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* ── How It Works ──────────────────────────────────────── */}
+        <section className="bg-secondary/20 border-y border-border">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-28">
+            <div className="text-center mb-16 animate-fade-in-up">
+              <Badge variant="secondary" className="mb-4">How it works</Badge>
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                Up and running in minutes
+              </h2>
+              <p className="text-muted-foreground">
+                Four simple steps to professional scheduling
               </p>
             </div>
 
-            <div className="card-brand p-8 group hover:scale-105 transition-transform">
-              <div className="w-14 h-14 bg-purple-100 rounded-lg flex items-center justify-center mb-6 group-hover:bg-purple-600 transition-colors">
-                <svg className="w-7 h-7 text-purple-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-3">Calendar Sync</h3>
-              <p className="text-gray-600">
-                Connect your Google Calendar to prevent double-booking and automatically add meetings to your calendar.
-              </p>
+            <div className="relative grid md:grid-cols-4 gap-8">
+              {/* Connecting line (desktop) */}
+              <div className="hidden md:block absolute top-7 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
+              {steps.map((step, i) => (
+                <div
+                  key={step.number}
+                  className={`relative flex flex-col items-center text-center animate-fade-in-up animation-delay-${i * 100 + 100}`}
+                >
+                  <div className="relative mb-5">
+                    <div className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-mono font-bold text-lg shadow-lg">
+                      {step.number}
+                    </div>
+                    {i < steps.length - 1 && (
+                      <div className="md:hidden absolute top-1/2 left-full w-8 h-px bg-border -translate-y-1/2" />
+                    )}
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-2">{step.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              ))}
             </div>
 
-            <div className="card-brand p-8 group hover:scale-105 transition-transform">
-              <div className="w-14 h-14 bg-green-100 rounded-lg flex items-center justify-center mb-6 group-hover:bg-green-600 transition-colors">
-                <svg className="w-7 h-7 text-green-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-3">Smart Notifications</h3>
-              <p className="text-gray-600">
-                Automatic email confirmations and reminders for both you and your attendees. Never miss a meeting.
-              </p>
-            </div>
-
-            <div className="card-brand p-8 group hover:scale-105 transition-transform">
-              <div className="w-14 h-14 bg-amber-100 rounded-lg flex items-center justify-center mb-6 group-hover:bg-amber-600 transition-colors">
-                <svg className="w-7 h-7 text-amber-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-3">Custom Branding</h3>
-              <p className="text-gray-600">
-                Add your logo, brand colors, and custom messaging to create a professional booking experience.
-              </p>
-            </div>
-
-            <div className="card-brand p-8 group hover:scale-105 transition-transform">
-              <div className="w-14 h-14 bg-red-100 rounded-lg flex items-center justify-center mb-6 group-hover:bg-red-600 transition-colors">
-                <svg className="w-7 h-7 text-red-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-3">Team Scheduling</h3>
-              <p className="text-gray-600">
-                Coordinate team availability and manage bookings for multiple team members from one account.
-              </p>
-            </div>
-
-            <div className="card-brand p-8 group hover:scale-105 transition-transform">
-              <div className="w-14 h-14 bg-indigo-100 rounded-lg flex items-center justify-center mb-6 group-hover:bg-indigo-600 transition-colors">
-                <svg className="w-7 h-7 text-indigo-600 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-3">Analytics & Insights</h3>
-              <p className="text-gray-600">
-                Track your meetings, analyze booking patterns, and optimize your scheduling with detailed insights.
-              </p>
+            <div className="text-center mt-12 animate-fade-in-up animation-delay-500">
+              <Button asChild size="lg" className="group gap-2">
+                <Link href="/auth/signup">
+                  Start Scheduling Now
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </Button>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* How It Works */}
-        <div className="mt-32">
-          <h3 className="text-3xl md:text-4xl font-bold text-center mb-4">How It Works</h3>
-          <p className="text-center text-gray-600 mb-12">Get started in minutes, not hours</p>
-          <div className="grid md:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="brand-gradient text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
-                1
+        {/* ── Donate Banner ─────────────────────────────────────── */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="bg-gradient-to-br from-red-950/40 to-orange-950/30 border border-red-900/50 rounded-2xl p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 animate-fade-in-up">
+            <div className="text-center md:text-left">
+              <div className="flex items-center gap-2 justify-center md:justify-start mb-3">
+                <Heart className="h-5 w-5 text-red-400 fill-red-400" />
+                <span className="text-sm font-semibold text-red-400 uppercase tracking-wide">
+                  This product is free
+                </span>
               </div>
-              <h4 className="font-bold mb-2 text-lg">Sign Up</h4>
-              <p className="text-gray-600">Create your free account in seconds. No credit card required.</p>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                Like what we&apos;re doing? Support Abhilasha Foundation
+              </h2>
+              <p className="text-muted-foreground max-w-lg">
+                Croodle is 100% free. Instead of charging you, we encourage you
+                to donate to{' '}
+                <strong className="text-foreground">Abhilasha Foundation</strong>{' '}
+                — a registered NGO empowering underprivileged children, women,
+                and the elderly across India.
+              </p>
             </div>
-
-            <div className="text-center">
-              <div className="brand-gradient text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
-                2
-              </div>
-              <h4 className="font-bold mb-2 text-lg">Set Availability</h4>
-              <p className="text-gray-600">Define your working hours and create custom event types.</p>
-            </div>
-
-            <div className="text-center">
-              <div className="brand-gradient text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
-                3
-              </div>
-              <h4 className="font-bold mb-2 text-lg">Share Your Link</h4>
-              <p className="text-gray-600">Send your personalized booking page to anyone.</p>
-            </div>
-
-            <div className="text-center">
-              <div className="brand-gradient text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
-                4
-              </div>
-              <h4 className="font-bold mb-2 text-lg">Get Booked</h4>
-              <p className="text-gray-600">Let others schedule meetings with you automatically.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Social Proof / Testimonials */}
-        <div className="mt-32">
-          <h3 className="text-3xl font-bold text-center mb-12">Trusted by professionals worldwide</h3>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-xl shadow-md">
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              <p className="text-gray-600 mb-4">&quot;SchedulePro saved me hours every week. No more email ping-pong!&quot;</p>
-              <p className="font-bold">Sarah Johnson</p>
-              <p className="text-sm text-gray-500">Marketing Consultant</p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-md">
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              <p className="text-gray-600 mb-4">&quot;The custom branding feature makes my booking page look so professional!&quot;</p>
-              <p className="font-bold">Michael Chen</p>
-              <p className="text-sm text-gray-500">Freelance Designer</p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-md">
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              <p className="text-gray-600 mb-4">&quot;Simple, powerful, and exactly what I needed for my coaching business.&quot;</p>
-              <p className="font-bold">Emily Rodriguez</p>
-              <p className="text-sm text-gray-500">Life Coach</p>
+            <div className="flex flex-col items-center gap-3 shrink-0">
+              <Button
+                asChild
+                size="lg"
+                className="bg-red-500 hover:bg-red-600 text-white gap-2 whitespace-nowrap"
+              >
+                <Link href="/donate">
+                  <Heart className="h-4 w-4 fill-white" />
+                  Donate Here
+                </Link>
+              </Button>
+              <a
+                href="https://www.abhilasha-foundation.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                abhilasha-foundation.org
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* CTA */}
-        <div className="mt-32 brand-gradient rounded-2xl p-12 text-center text-white shadow-2xl">
-          <h3 className="text-3xl md:text-4xl font-bold mb-4">Ready to get started?</h3>
-          <p className="text-xl mb-8 opacity-90">
-            Join 5,000+ professionals who simplified their scheduling
-          </p>
-          <Link
-            href="/auth/signup"
-            className="inline-block px-8 py-4 bg-white text-blue-600 text-lg font-semibold rounded-lg hover:bg-gray-100 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-          >
-            Create Your Free Account →
-          </Link>
-          <p className="mt-4 text-sm opacity-75">No credit card required • Free forever plan available</p>
-        </div>
+        {/* ── CTA ───────────────────────────────────────────────── */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-28">
+          <div className="relative bg-card border border-border rounded-2xl p-12 text-center overflow-hidden animate-fade-in-up">
+            {/* Background glow */}
+            <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
+              <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent rounded-2xl" />
+            </div>
+
+            <Badge variant="secondary" className="mb-6">Ready to start?</Badge>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Your scheduling link is waiting
+            </h2>
+            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+              Join 5,000+ professionals who simplified their scheduling — in
+              under 2 minutes, for free.
+            </p>
+            <Button asChild size="lg" className="group gap-2 animate-glow-pulse">
+              <Link href="/auth/signup">
+                Create Your Free Account
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Button>
+            <p className="mt-4 text-xs text-muted-foreground">
+              Free to use &bull; No credit card required &bull; Cancel anytime
+            </p>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
